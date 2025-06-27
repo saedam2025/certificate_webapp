@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>강사 경력증명서 신청</title>
+  <style>
+    body { font-family: 'Nanum Gothic', sans-serif; max-width: 600px; margin: 40px auto; }
+    h1 { text-align: center; }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    label { font-weight: bold; }
+    input, select { padding: 8px; font-size: 14px; }
+    button { padding: 10px; background-color: #0055cc; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #003f99; }
+  </style>
+  <script>
+    function toggleEndDateInput(selectElement) {
+      const endDateInput = document.getElementById("end-date");
+      if (selectElement.value === "현재까지") {
+        endDateInput.style.display = "none";
+        endDateInput.disabled = true;
+      } else {
+        endDateInput.style.display = "inline";
+        endDateInput.disabled = false;
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>강사 경력증명서 신청</h1>
+  <form method="POST" action="/submit">
+    <label>성명 <input type="text" name="성명" required></label>
+    <label>주민번호 <input type="text" name="주민번호" required></label>
+    <label>자택주소 <input type="text" name="자택주소" required></label>
+    <label>근무시작일 <input type="date" name="근무시작일" required></label>
+
+    <!-- 종료일 선택 방식 -->
+    <label>
+      근무종료일 선택
+      <select name="종료일선택" onchange="toggleEndDateInput(this)">
+        <option value="날짜지정">날짜 지정</option>
+        <option value="현재까지">현재까지</option>
+      </select>
+    </label>
+    <label>
+      근무종료일
+      <input type="date" name="근무종료일" id="end-date">
+    </label>
+
+    <label>근무장소 <input type="text" name="근무장소" required></label>
+    <label>강의과목 <input type="text" name="강의과목" required></label>
+    <label>이메일주소 <input type="email" name="이메일주소" required></label>
+    <button type="submit">신청하기</button>
+  </form>
+</body>
+</html>
