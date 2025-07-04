@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import pandas as pd
-import pdfkit
 from jinja2 import Template
 import smtplib, os
+
+from weasyprint import HTML
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
@@ -15,7 +17,7 @@ DATA_PATH = "pending_submissions.xlsx"
 TEMPLATE_PATH = "certificate_template.html"
 OUTPUT_DIR = "output_pdfs"
 SEAL_IMAGE = "seal.gif"
-WKHTMLTOPDF_PATH = r"C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
+
 EMAIL_ADDRESS = "lunch9797@gmail.com"
 APP_PASSWORD = "txnb ofpi jgys jpfq"
 
@@ -66,15 +68,14 @@ def send_email(to_email, name, pdf_path):
         server.login(EMAIL_ADDRESS, APP_PASSWORD)
         server.send_message(msg)
 
+from weasyprint import HTML  # 상단에 추가
+
 def generate_pdf(row, 발급번호):
     with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
         template = Template(f.read())
 
     시작일 = format_korean_date(row["근무시작일"])
-    if row["근무종료일"] == "현재까지":
-        종료일 = "현재까지"
-    else:
-        종료일 = format_korean_date(row["근무종료일"])
+    종료일 = "현재까지" if row["근무종료일"] == "현재까지" else format_korean_date(row["근무종료일"])
 
     html = template.render(
         성명=row["성명"],
@@ -88,15 +89,10 @@ def generate_pdf(row, 발급번호):
         발급번호=발급번호
     )
 
-    seal_path = os.path.abspath(SEAL_IMAGE)
-    html = html.replace('src="seal.gif"', f'src="file:///{seal_path}"')
-
     output_path = os.path.join(OUTPUT_DIR, f"{row['성명']}_경력증명서.pdf")
-    config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
-    options = {'enable-local-file-access': ''}
-
-    pdfkit.from_string(html, output_path, configuration=config, options=options)
+    HTML(string=html, base_url='.').write_pdf(output_path)  # ✅ 여기만 바뀜
     return output_path
+
 
 @app.route("/")
 def index():
