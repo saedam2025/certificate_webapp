@@ -25,10 +25,10 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 if not os.path.exists(DATA_PATH):
-pd.DataFrame(columns=[
+    pd.DataFrame(columns=[
     "신청일", "증명서종류", "성명", "주민번호", "자택주소", "근무시작일", "근무종료일",
     "근무장소", "강의과목", "이메일주소", "상태", "발급일", "발급번호"
-]).to_excel(DATA_PATH, index=False)
+    ]).to_excel(DATA_PATH, index=False)
 
 
 def format_korean_date(date_str):
