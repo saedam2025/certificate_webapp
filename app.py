@@ -25,7 +25,11 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 if not os.path.exists(DATA_PATH):
-    pd.DataFrame(columns=["신청일", "성명", "주민번호", "자택주소", "근무시작일", "근무종료일", "근무장소", "강의과목", "이메일주소", "상태", "발급일", "발급번호"]).to_excel(DATA_PATH, index=False)
+pd.DataFrame(columns=[
+    "신청일", "증명서종류", "성명", "주민번호", "자택주소", "근무시작일", "근무종료일",
+    "근무장소", "강의과목", "이메일주소", "상태", "발급일", "발급번호"
+]).to_excel(DATA_PATH, index=False)
+
 
 def format_korean_date(date_str):
     dt = datetime.strptime(date_str, "%Y-%m-%d")
@@ -78,6 +82,7 @@ def generate_pdf(row, 발급번호):
     종료일 = "현재까지" if row["근무종료일"] == "현재까지" else format_korean_date(row["근무종료일"])
 
     html = template.render(
+        증명서종류=row["증명서종류"] 
         성명=row["성명"],
         주민번호=row["주민번호"],
         주소=row["자택주소"],
@@ -112,6 +117,7 @@ def submit():
     form_data["신청일"] = datetime.today().strftime("%Y-%m-%d %H:%M")
     form_data["상태"] = "대기"
     form_data["발급일"] = ""
+    form_data["증명서종류"] = form_data.get("증명서종류", "")
 
     # ✅ 저장 전에 불필요한 select 항목 제거
     if "종료일선택" in form_data:

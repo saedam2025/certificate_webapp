@@ -25,6 +25,7 @@
       <tr>
         <th>No</th>
         <th>신청일</th>
+        <th>증명서종류</th>
         <th>성명</th>
         <th>주민번호</th>
         <th>과목</th>
@@ -43,6 +44,7 @@
       <tr>
         <td>{{ (total_count - ((page - 1) * 10 + loop.index0)) }}</td>
         <td>{{ row.신청일 }}</td>
+        <td>{{ row.증명서종류 }}</td>
         <td>{{ row.성명 }}</td>
         <td>{{ row.주민번호 }}</td>
         <td>{{ row.강의과목 }}</td>
