@@ -82,7 +82,7 @@ def generate_pdf(row, 발급번호):
     종료일 = "현재까지" if row["근무종료일"] == "현재까지" else format_korean_date(row["근무종료일"])
 
     html = template.render(
-        증명서종류 = row["증명서종류"]   # ✅ 영문 쌍따옴표로 변경
+        증명서종류 = row["증명서종류"],
         성명=row["성명"],
         주민번호=row["주민번호"],
         주소=row["자택주소"],
