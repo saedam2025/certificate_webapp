@@ -28,12 +28,16 @@ def delete_pdf(system, filename):
 
     return redirect(url_for("file_list", system=system))
 
-
 @app.route('/file_list/<system>')
 def file_list(system):
     folder = f"/mnt/data/output_pdfs{system[-2:]}"
     files = os.listdir(folder)
-    return render_template(f"{system}/file_list.html", files=files, system=system)
+
+    # HTML 파일 직접 읽어서 렌더링
+    with open(f"{system}/file_list.html", encoding="utf-8") as f:
+        html = f.read()
+
+    return render_template_string(html, files=files, system=system)
 
 # pdf파일 삭제를 위한 라우트끝===
 
