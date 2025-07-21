@@ -187,7 +187,7 @@
             </select>
           </label>
           <label id="end-date-wrapper"><span class="required-star">근무종료일</span>
-            <input type="date" name="근무종료일" id="end-date">
+            <input type="date" name="근무종료일" id="end-date" required>
           </label>
         </div>
 
@@ -289,8 +289,8 @@ window.onload = function () {
 </script>
 
 
-    <!-- 오른쪽: 캐릭터 + 말풍선 -->
-    <div style="position: relative; width: 280px; text-align: center; margin-top: 460px;">
+    <!-- 오른쪽 유의사항 말풍선 -->
+    <div style="position: relative; width: 280px; text-align: center; margin-top: 500px;">
       <div style="
         position: absolute;
         top: -200px;
@@ -307,34 +307,64 @@ window.onload = function () {
         width: 220px;
         z-index: 1;
       ">
-        <div style="text-align: left; line-height: 1.6;">
-          <h3 style="text-align: center; font-size: 14px; margin: 0 0 8px 0; border-bottom: 1px dotted #999; padding-bottom: 6px;">
-            증명신청 유의사항
-          </h3>
-          1. 입력한 내용을 사실확인 후 발급됩니다.<br>
-          2. 입력한 내용 중 허위사실이 있을 시 <br>&nbsp;&nbsp;&nbsp;&nbsp;발급되지 않습니다.<br>
-          3. 주소 및 내용 등을 되도록 정확히 <br>&nbsp;&nbsp;&nbsp;&nbsp;입력하세요.<br>
-          4. 근무기간이 정확히 기억나지 않을 시 <br>&nbsp;&nbsp;&nbsp;&nbsp;대략적으로 입력하세요.<br>
-          5. 입력하신 이메일로 증명서 PDF 파일이 <br>&nbsp;&nbsp;&nbsp;&nbsp;전송됩니다.
-        </div>
-        <div style="
-          position: absolute;
-          bottom: -12px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 0;
-          height: 0;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-top: 12px solid #fff;
-          filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
-        "></div>
-      </div>
-      <img src="/static/img/girl_int.png" alt="안내 캐릭터" style="width: 140px; margin-top: 60px;">
-    </div>
-  </div>
+        <div style="text-align: left; line-height: 2.2;">
+<span style="
+  display: inline-block;
+  width: 195px;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #fdfdfd;
+  color: #1a2b4c;
+  text-align: center;
+  margin-top: 8px;
+">
+  증명신청 유의사항<br>
+</span>
 
+  <br><br>
 
+  <span style="display: block; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    1. 입력한 내용을 사실확인 후 발급됩니다.
+  </span>
+  <span style="display: block; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    2. 입력한 내용 중 허위사실이 있을 시
+  </span>
+  <span style="display: block; padding-left: 1.5em; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    발급되지 않습니다.
+  </span>
+  <span style="display: block; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    3. 주소 및 내용 등을 되도록 정확히
+  </span>
+  <span style="display: block; padding-left: 1.5em; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    입력하세요.
+  </span>
+  <span style="display: block; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    4. 입력하신 이메일로 증명서 PDF 파일이
+  </span>
+  <span style="display: block; padding-left: 1.5em; font-family: 'Nanum Gothic', sans-serif; font-size: 12px;">
+    전송됩니다.
+  </span>
+
+<div style="text-align: center; margin-top: 12px;">
+  <span style="
+    display: inline-block;
+    font-size: 13px;
+    font-weight: bold;
+    background-color: #ffffff;
+    color: #1a2b4c;
+    padding: 8px 16px;
+    border-radius: 6px;
+  ">
+    발급문의: 📞 031-8016-1900
+  </span>
+</div>
+  <br>
+  <img src="/static/img/logo.gif" alt="로고" style="display: block; margin: 0 auto; height: 40px; width: auto;">
+</div>
+</div>
 
 </body>
 </html>

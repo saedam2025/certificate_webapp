@@ -369,9 +369,9 @@ a.btn.issue:hover {
           {% endif %}
 <td>
   {% if row.상태 == "발급완료" and row.발급번호 %}
-    <a class="pdf-link" href="/{{ system }}/pdf/{{ row.발급번호 }}_{{ row.성명 }}_{{ row.증명서종류.replace(' ', '') }}.pdf" target="_blank">
-      {{ row.발급번호 }}
-    </a>
+<a class="pdf-link" href="/{{ system }}/pdf/{{ row.발급번호 }}_{{ row.성명 }}_{{ row.증명서종류.replace(' ', '') }}.pdf" target="_blank">
+  {{ row.발급번호 }}
+</a>
   {% else %}
     발급대기
   {% endif %}
@@ -559,6 +559,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const editButtons = document.querySelectorAll(".btn.save");
+    editButtons.forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        if (!confirm("수정하시겠습니까?")) {
+          e.preventDefault();
+        }
+      });
+    });
+  });
 </script>
 
 <br><br><br><br>
