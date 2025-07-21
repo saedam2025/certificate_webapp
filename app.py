@@ -7,10 +7,28 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo # ✅ 미국 서버를 한국 시간으로 조정
 from flask import render_template_string
+
+# ✅ 한국 시간 반환 함수
+def now_kst():
+    return datetime.now(ZoneInfo("Asia/Seoul"))
+
+import shutil
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
+config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 app = Flask(__name__, template_folder=".")
 app.secret_key = "saedam-super-secret"
+
+# pdf저장디렉토리
+base_dir = "/mnt/data" if os.path.exists("/mnt/data") else "."
+
+pdf_folder1 = os.path.join(base_dir, "output_pdfs01")
+pdf_folder2 = os.path.join(base_dir, "output_pdfs02")
+
+os.makedirs(pdf_folder1, exist_ok=True)
+os.makedirs(pdf_folder2, exist_ok=True)
 
 # 시스템별 비밀번호
 USER_PASSWORDS = {
@@ -30,9 +48,8 @@ ADMIN_EMAILS = {
 }
 
 SEAL_IMAGE = "seal.gif"
-WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-EMAIL_ADDRESS = "lunch9797@gmail.com"
-APP_PASSWORD = "txnb ofpi jgys jpfq"
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
  # 신청오면 메일보내주기 시작----------
 def send_admin_notification(system, name, cert_type):
@@ -71,7 +88,7 @@ def format_korean_date(date_str):
 def get_issue_number_from_excel(data_path):
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
-    year_prefix = datetime.today().strftime('%y')
+    year_prefix = now_kst().strftime('%y')
     df = df[df["발급번호"].astype(str).str.startswith(f"제{year_prefix}-", na=False)]
     nums = [int(val.split("-")[1].replace("호", "")) for val in df["발급번호"].dropna() if "-" in val]
     return (max(nums) if nums else 0) + 1
@@ -115,16 +132,15 @@ def generate_pdf(row, 발급번호, system):
         시작=시작일,
         종료=종료일,
         종료사유=row.get("종료사유", ""),
-        발급일자=datetime.today().strftime("%Y년 %m월 %d일"),
+        발급일자=now_kst().strftime("%Y년 %m월 %d일"),
         발급번호=발급번호
     )
     seal_path = os.path.abspath(SEAL_IMAGE)
     html = html.replace('src="seal.gif"', f'src="file:///{seal_path}"')
-    output_dir = f"output_pdfs{system[-2:]}"
+    output_dir = os.path.join("/mnt/data", f"output_pdfs{system[-2:]}")
     os.makedirs(output_dir, exist_ok=True)
     cert_type = row.get("증명서종류", "증명서").replace(" ", "")
     output_path = os.path.join(output_dir, f"{발급번호}_{row['성명']}_{cert_type}.pdf")
-    config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
     options = {'enable-local-file-access': ''}
     pdfkit.from_string(html, output_path, configuration=config, options=options)
     return output_path
@@ -139,7 +155,7 @@ def redirect_system02():
 
 @app.route('/<system>/update/<int:idx>', methods=['POST'])
 def update(system, idx):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     page = int(request.form.get("page", 1))  # 🔹 page 값 받기
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
@@ -161,7 +177,7 @@ def update(system, idx):
 
 @app.route('/<system>/delete/<int:idx>')
 def delete(system, idx):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     page = int(request.args.get("page", 1))  # 🔹 쿼리스트링에서 page 받기
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
@@ -174,13 +190,13 @@ def delete(system, idx):
 
 @app.route('/<system>/submit', methods=['POST'])
 def submit(system):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
 
     form_data = dict(request.form)
     form_data["근무종료일"] = "현재까지" if form_data.get("종료일선택") == "현재까지" else form_data.get("근무종료일", "")
-    form_data["신청일"] = datetime.today().strftime("%Y-%m-%d")
+    form_data["신청일"] = now_kst().strftime("%Y-%m-%d")
     form_data["상태"] = "대기"
     form_data["발급일"] = ""
     if "종료일선택" in form_data:
@@ -256,7 +272,7 @@ def admin(system, page):
 
     # 패스워드 걸기 끝===================
 
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)  # 최신순 정렬
@@ -287,21 +303,26 @@ def logout(system):
     session.pop(f"{system}_authenticated", None)
     return redirect(url_for("admin", system=system))
 
+@app.route('/<system>/pdf/<filename>')
+def download_pdf(system, filename):
+    pdf_dir = f"/mnt/data/output_pdfs{system[-2:]}"  # 예: output_pdfs01
+    return send_from_directory(pdf_dir, filename)
+
 @app.route("/<system>/generate/<int:idx>")
 def generate(system, idx):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     page = int(request.args.get("page", 1))  # 🔹 쿼리스트링에서 page 받기
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
     row = df.iloc[idx]
-    발급번호 = f"제{datetime.today().strftime('%y')}-{get_issue_number_from_excel(data_path)}호"
+    발급번호 = f"제{now_kst().strftime('%y')}-{get_issue_number_from_excel(data_path)}호"
     pdf = generate_pdf(row, 발급번호, system)
     send_email(row["이메일주소"], row["성명"], pdf, row["증명서종류"])
     original_df = pd.read_excel(data_path)
     original_index = len(original_df) - 1 - idx
     original_df.at[original_index, "상태"] = "발급완료"
-    original_df.at[original_index, "발급일"] = datetime.today().strftime("%Y-%m-%d")
+    original_df.at[original_index, "발급일"] = now_kst().strftime("%Y-%m-%d")
     original_df.at[original_index, "발급번호"] = 발급번호
     original_df.to_excel(data_path, index=False)
     return redirect(url_for("admin", system=system, page=page))  # 🔹 해당 페이지로 이동
