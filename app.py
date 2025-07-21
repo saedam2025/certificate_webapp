@@ -10,8 +10,7 @@ from datetime import datetime, timedelta
 from flask import render_template_string
 
 app = Flask(__name__, template_folder=".")
-app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
-
+app.secret_key = "saedam-super-secret"
 
 # 시스템별 비밀번호
 USER_PASSWORDS = {
@@ -31,13 +30,9 @@ ADMIN_EMAILS = {
 }
 
 SEAL_IMAGE = "seal.gif"
-
-import shutil
-WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
-
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
-APP_PASSWORD = os.environ.get("APP_PASSWORD")
-
+WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+EMAIL_ADDRESS = "lunch9797@gmail.com"
+APP_PASSWORD = "txnb ofpi jgys jpfq"
 
  # 신청오면 메일보내주기 시작----------
 def send_admin_notification(system, name, cert_type):
