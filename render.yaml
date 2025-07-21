@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: saedam-certificate
+    runtime: python
+    buildCommand: ""
+    startCommand: python app.py
+    envVars:
+      - key: EMAIL_ADDRESS
+        value: lunch9797@gmail.com
+      - key: APP_PASSWORD
+        value: txnb ofpi jgys jpfq
+    plan: free

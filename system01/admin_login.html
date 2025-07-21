@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>경력증명서 발급 로그인</title>
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+  <style>
+    body {
+      font-family: 'Nanum Gothic', sans-serif;
+      background-color: #f8f9fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-box {
+      background: #ffffff;
+      padding: 36px 32px;
+      border: 1px solid #d0d4d8;
+      border-radius: 10px;
+      width: 320px;
+      text-align: center;
+      position: relative;
+    }
+
+    h2 {
+      font-size: 20px;
+      color: #1a2b4c;
+      margin-bottom: 80px; /* 겹침 방지: 말풍선과 거리 확보 */
+    }
+
+    .character-wrapper {
+      position: relative;
+      margin-bottom: -4px;
+    }
+
+    .speech-bubble {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      padding: 8px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #333;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+
+  /* 👇 그림자 강조: 더 진하고 또렷하게 */
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.15));
+}
+
+
+    .character {
+      max-height: 140px;
+      object-fit: contain;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      border: 1px solid #ccd0d5;
+      border-radius: 6px;
+      margin-bottom: 18px;
+      box-sizing: border-box;
+      transition: border 0.3s;
+    }
+
+    input[type="password"]:focus {
+      border-color: #0077cc;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #1a73e8;
+      color: white;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0f5bbd;
+    }
+
+    .msg {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .guide {
+      font-size: 12px;
+      color: #888;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 말풍선 내용 처리 -->
+{% set messages = get_flashed_messages() %}
+{% if messages %}
+  <div class="speech-bubble" style="color: red;">
+    {{ messages[0] }}
+  </div>
+{% else %}
+  <div class="speech-bubble" style="color: #333;">
+    비밀번호 4자리를 입력해주세요
+  </div>
+{% endif %}
+
+
+  <div class="login-box">
+    <h2>강사 경력증명서 발급 로그인</h2>
+
+    <form method="POST">
+
+
+<!-- 캐릭터 + 말풍선 -->
+<div class="character-wrapper">
+  {% set flashed = get_flashed_messages() %}
+  <div class="speech-bubble" style="color: {{ 'red' if flashed else '#333' }};">
+    {{ flashed[0] if flashed else '비밀번호 4자리를 입력해주세요.' }}
+  </div>
+  <img src="/static/img/{{ 'girl2.png' if flashed else 'girl.png' }}" class="character" alt="안내 캐릭터">
+</div>
+
+
+
+      <input type="password" name="password" maxlength="4" pattern="\d{4}" placeholder="비밀번호 (숫자 4자리)" required>
+      <button type="submit">확인</button>
+    </form>
+
+    <div class="guide">사단법인 새담청소년교육문화원</div>
+   
+  </div>
+
+</body>
+</html>

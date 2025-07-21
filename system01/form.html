@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>강사 경력증명서 신청</title>
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nanum Gothic', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px 10px;
+    }
+
+    .required-star::before {
+      content: "*";
+      color: orange;
+      margin-right: 4px;
+      font-weight: bold;
+    }
+
+    .container {
+      width: 500px;
+      max-width: 100%;
+      background-color: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #1a2b4c;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 20px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      color: #555;
+    }
+
+    label span {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      padding: 6px 8px;
+      font-size: 12px;
+      border: 1px solid #ddd;
+      background-color: #fafafa;
+      border-radius: 4px;
+    }
+
+    .inline-group {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 14px;
+    }
+
+    .inline-group > label {
+      flex: 1;
+    }
+
+    button {
+      grid-column: 1 / -1;
+      padding: 10px;
+      font-size: 14px;
+      background-color: #0055cc;
+      color: white;
+      border: 1px solid #0055cc;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    button:hover {
+      background-color: #3f85ff;
+      border-color: #3f85ff;
+    }
+  </style>
+
+  <script>
+    function toggleEndDateInput(selectElement) {
+      const endDateWrapper = document.getElementById("end-date-wrapper");
+      const endDateInput = document.getElementById("end-date");
+      if (selectElement.value === "현재까지") {
+        endDateWrapper.style.display = "none";
+        endDateInput.disabled = true;
+      } else {
+        endDateWrapper.style.display = "flex";
+        endDateInput.disabled = false;
+      }
+    }
+
+    function toggleReasonSelect() {
+      const certType = document.querySelector('select[name="증명서종류"]');
+      const reasonWrapper = document.getElementById("reason-wrapper");
+      const reasonSelect = reasonWrapper.querySelector('select');
+      if (certType.value === "강사 해촉증명서") {
+        reasonWrapper.style.display = "flex";
+        reasonSelect.disabled = false;
+      } else {
+        reasonWrapper.style.display = "none";
+        reasonSelect.disabled = true;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('select[name="종료일선택"]')?.addEventListener('change', function () {
+        toggleEndDateInput(this);
+      });
+      document.querySelector('select[name="증명서종류"]')?.addEventListener('change', toggleReasonSelect);
+      toggleEndDateInput(document.querySelector('select[name="종료일선택"]'));
+      toggleReasonSelect();
+    });
+  </script>
+</head>
+
+<body>
+
+<br>
+  <div style="display: flex; justify-content: center; align-items: flex-start; gap: 24px; flex-wrap: wrap;">
+
+    <!-- 왼쪽: 입력 폼 -->
+    <div class="container">
+
+      <h1>강사 경력증명서 신청</h1>
+
+      <form method="POST" action="/{{ system }}/submit">
+        <label class="full-width"><span class="required-star">증명서 종류</span>
+          <select name="증명서종류" required>
+            <option value="">-- 선택하세요 --</option>
+            <option value="강사 활동증명서">강사 활동증명서</option>
+            <option value="강사 해촉증명서">강사 해촉증명서</option>
+          </select>
+        </label>
+
+        <label><span class="required-star">성명</span>
+          <input type="text" name="성명" required>
+        </label>
+
+        <label><span class="required-star">주민번호</span>
+          <input type="text" name="주민번호" required pattern="\d{6}-\d{7}" placeholder="예: 901010-1234567">
+        </label>
+
+        <label><span class="required-star">직책</span>
+          <select name="직책" required>
+            <option value="">-- 선택하세요 --</option>
+            <option value="늘봄학교 선택형 강사">늘봄학교 선택형 강사</option>
+            <option value="늘봄학교 맞춤형 강사">늘봄학교 맞춤형 강사</option>
+            <option value="방과후 강사">방과후 강사</option>
+          </select>
+        </label>
+
+        <label class="full-width"><span class="required-star">자택주소</span>
+          <input type="text" name="자택주소" required>
+        </label>
+
+        <label><span class="required-star">근무시작일</span>
+          <input type="date" name="근무시작일" required>
+        </label>
+
+        <div class="inline-group">
+          <label><span class="required-star">근무종료일 선택</span>
+            <select name="종료일선택">
+              <option value="날짜지정">날짜 지정</option>
+              <option value="현재까지">현재까지(현재 근무 중인 경우)</option>
+            </select>
+          </label>
+          <label id="end-date-wrapper"><span class="required-star">근무종료일</span>
+            <input type="date" name="근무종료일" id="end-date">
+          </label>
+        </div>
+
+        <label><span class="required-star">근무장소</span>
+          <input type="text" name="근무장소" required>
+        </label>
+
+        <label><span class="required-star">강의과목</span>
+          <input type="text" name="강의과목" required>
+        </label>
+
+        <div class="inline-group">
+          <label><span class="required-star">증명용도</span>
+            <select name="용도" required>
+              <option value="">-- 선택하세요 --</option>
+              <option value="학교제출용">학교제출용</option>
+              <option value="기관제출용">기관제출용</option>
+              <option value="보험공단제출용">보험공단제출용</option>
+            </select>
+          </label>
+          <label id="reason-wrapper" style="display:none;"><span class="required-star">계약종료사유</span>
+            <select name="종료사유" required>
+              <option value="">-- 선택하세요 --</option>
+              <option value="개인사정">개인사정</option>
+              <option value="계약만료">계약만료</option>
+              <option value="계약해지">계약해지</option>
+            </select>
+          </label>
+        </div>
+
+<label class="full-width">
+  <span class="required-star">이메일 주소</span>
+  <input type="email" name="이메일주소" required
+         pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+         placeholder="예: example@domain.com"
+         title="이메일 형식이 잘못되었습니다. 예: example@domain.com">
+</label>
+
+
+        <button type="submit">신청하기</button>
+      </form>
+    </div>
+
+<script>    // 이메일 유효성 검사 및 '신청 처리중...' 버튼 처리
+window.onload = function () {
+  const form = document.querySelector("form");
+  const submitBtn = form.querySelector("button[type='submit']");
+
+  // 이메일 유효성 검사
+  form.addEventListener("submit", function (e) {
+    const certType = form.querySelector('select[name="증명서종류"]').value;
+    const endDateSelect = form.querySelector('select[name="종료일선택"]').value;
+
+    // ⛔ 해촉증명서 + 현재까지 선택 방지
+    if (certType === "강사 해촉증명서" && endDateSelect === "현재까지") {
+      alert("강사 해촉증명서의 경우 근무종료일을 '현재까지'로 선택할 수 없습니다.\n정확한 날짜를 지정해주세요.");
+      e.preventDefault();
+      return;
+    }
+
+    const emailInput = form.querySelector('input[name="이메일주소"]');
+    const email = emailInput.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      alert("이메일 형식이 올바르지 않습니다.\n예: example@domain.com");
+      emailInput.focus();
+      e.preventDefault(); // 제출 막기
+      return;
+    }
+
+    // 통과하면 버튼 비활성화
+    submitBtn.disabled = true;
+    submitBtn.innerText = "신청 처리 중...";
+  });
+
+  // 종료일 토글
+  const endDateSelect = document.querySelector('select[name="종료일선택"]');
+  const certTypeSelect = document.querySelector('select[name="증명서종류"]');
+
+  if (endDateSelect) {
+    endDateSelect.addEventListener('change', function () {
+      toggleEndDateInput(this);
+    });
+    toggleEndDateInput(endDateSelect);
+  }
+
+  if (certTypeSelect) {
+    certTypeSelect.addEventListener('change', toggleReasonSelect);
+    toggleReasonSelect();
+  }
+
+  // 처음 로딩 시 버튼 활성화
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerText = "신청하기";
+  }
+};
+</script>
+
+
+    <!-- 오른쪽: 캐릭터 + 말풍선 -->
+    <div style="position: relative; width: 280px; text-align: center; margin-top: 460px;">
+      <div style="
+        position: absolute;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 14px 18px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-family: 'Nanum Gothic', sans-serif;
+        color: #333;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        width: 220px;
+        z-index: 1;
+      ">
+        <div style="text-align: left; line-height: 1.6;">
+          <h3 style="text-align: center; font-size: 14px; margin: 0 0 8px 0; border-bottom: 1px dotted #999; padding-bottom: 6px;">
+            증명신청 유의사항
+          </h3>
+          1. 입력한 내용을 사실확인 후 발급됩니다.<br>
+          2. 입력한 내용 중 허위사실이 있을 시 <br>&nbsp;&nbsp;&nbsp;&nbsp;발급되지 않습니다.<br>
+          3. 주소 및 내용 등을 되도록 정확히 <br>&nbsp;&nbsp;&nbsp;&nbsp;입력하세요.<br>
+          4. 근무기간이 정확히 기억나지 않을 시 <br>&nbsp;&nbsp;&nbsp;&nbsp;대략적으로 입력하세요.<br>
+          5. 입력하신 이메일로 증명서 PDF 파일이 <br>&nbsp;&nbsp;&nbsp;&nbsp;전송됩니다.
+        </div>
+        <div style="
+          position: absolute;
+          bottom: -12px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+          border-top: 12px solid #fff;
+          filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
+        "></div>
+      </div>
+      <img src="/static/img/girl_int.png" alt="안내 캐릭터" style="width: 140px; margin-top: 60px;">
+    </div>
+  </div>
+
+
+
+</body>
+</html>

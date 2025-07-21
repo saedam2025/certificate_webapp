@@ -1,0 +1,5 @@
+런더서버 업로드 용 수정사항
+
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS", "lunch9797@gmail.com")
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "txnb ofpi jgys jpfq")
