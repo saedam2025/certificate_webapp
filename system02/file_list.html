@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ system }} PDF 목록</title>
+</head>
+<body>
+  <h2>📂 {{ system }} PDF 목록</h2>
+  <ul>
+    {% for file in files %}
+      <li>
+        {{ file }}
+        [<a href="{{ url_for('serve_pdf', system=system, filename=file) }}">보기</a>]
+        [<a href="{{ url_for('delete_pdf', system=system, filename=file) }}" onclick="return confirm('정말 삭제할까요?');">삭제</a>]
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul style="color:red;">
+        {% for msg in messages %}
+          <li>{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+</body>
+</html>
