@@ -9,40 +9,10 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from flask import render_template_string
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=".")
+app.secret_key = "saedam-super-secret"
 
-# pdf파일 삭제를 위한 라우트===
-
-@app.route('/delete/<system>/<filename>')
-def delete_pdf(system, filename):
-    # system = system01 또는 system02
-    folder = f"/mnt/data/output_pdfs{system[-2:]}"  # system01 → output_pdfs01
-
-    file_path = os.path.join(folder, filename)
-
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        flash(f"{filename} 삭제 완료")
-    else:
-        flash(f"{filename} 파일이 존재하지 않음")
-
-    return redirect(url_for("file_list", system=system))
-
-@app.route('/file_list/<system>')
-def file_list(system):
-    folder = f"/mnt/data/output_pdfs{system[-2:]}"
-    files = os.listdir(folder)
-
-    # HTML 파일 직접 읽어서 렌더링
-    with open(f"{system}/file_list.html", encoding="utf-8") as f:
-        html = f.read()
-
-    return render_template_string(html, files=files, system=system)
-
-# pdf파일 삭제를 위한 라우트끝===
-
-
-# 로컬용: 현재 폴더 / Render용: /mnt/data 에다가 pdf 저장 폴더 만듦.
+# pdf저장디렉토리
 base_dir = "/mnt/data" if os.path.exists("/mnt/data") else "."
 
 pdf_folder1 = os.path.join(base_dir, "output_pdfs01")
@@ -69,13 +39,9 @@ ADMIN_EMAILS = {
 }
 
 SEAL_IMAGE = "seal.gif"
-
-import shutil
-WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
-
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
-APP_PASSWORD = os.environ.get("APP_PASSWORD")
-
+WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+EMAIL_ADDRESS = "lunch9797@gmail.com"
+APP_PASSWORD = "txnb ofpi jgys jpfq"
 
  # 신청오면 메일보내주기 시작----------
 def send_admin_notification(system, name, cert_type):
