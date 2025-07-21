@@ -8,9 +8,12 @@ from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from flask import render_template_string
+os.makedirs("output_pdfs01", exist_ok=True)
+os.makedirs("output_pdfs02", exist_ok=True)
 
 app = Flask(__name__, template_folder=".")
-app.secret_key = "saedam-super-secret"
+app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
+
 
 # 시스템별 비밀번호
 USER_PASSWORDS = {
@@ -30,9 +33,13 @@ ADMIN_EMAILS = {
 }
 
 SEAL_IMAGE = "seal.gif"
-WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-EMAIL_ADDRESS = "lunch9797@gmail.com"
-APP_PASSWORD = "txnb ofpi jgys jpfq"
+
+import shutil
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
+
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
+
 
  # 신청오면 메일보내주기 시작----------
 def send_admin_notification(system, name, cert_type):
