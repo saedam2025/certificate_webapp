@@ -155,7 +155,7 @@ def redirect_system02():
 
 @app.route('/<system>/update/<int:idx>', methods=['POST'])
 def update(system, idx):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     page = int(request.form.get("page", 1))  # 🔹 page 값 받기
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
@@ -177,7 +177,7 @@ def update(system, idx):
 
 @app.route('/<system>/delete/<int:idx>')
 def delete(system, idx):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx"
     page = int(request.args.get("page", 1))  # 🔹 쿼리스트링에서 page 받기
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
@@ -190,7 +190,7 @@ def delete(system, idx):
 
 @app.route('/<system>/submit', methods=['POST'])
 def submit(system):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx"
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
 
@@ -272,7 +272,7 @@ def admin(system, page):
 
     # 패스워드 걸기 끝===================
 
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx"
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)  # 최신순 정렬
@@ -303,9 +303,14 @@ def logout(system):
     session.pop(f"{system}_authenticated", None)
     return redirect(url_for("admin", system=system))
 
+@app.route('/<system>/pdf/<filename>')
+def download_pdf(system, filename):
+    pdf_dir = f"/mnt/data/output_pdfs{system[-2:]}"  # 예: output_pdfs01
+    return send_from_directory(pdf_dir, filename)
+
 @app.route("/<system>/generate/<int:idx>")
 def generate(system, idx):
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx"
     page = int(request.args.get("page", 1))  # 🔹 쿼리스트링에서 page 받기
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
