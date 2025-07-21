@@ -9,6 +9,10 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from flask import render_template_string
 
+import shutil
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
+config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+
 app = Flask(__name__, template_folder=".")
 app.secret_key = "saedam-super-secret"
 
@@ -132,7 +136,6 @@ def generate_pdf(row, 발급번호, system):
     os.makedirs(output_dir, exist_ok=True)
     cert_type = row.get("증명서종류", "증명서").replace(" ", "")
     output_path = os.path.join(output_dir, f"{발급번호}_{row['성명']}_{cert_type}.pdf")
-    config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
     options = {'enable-local-file-access': ''}
     pdfkit.from_string(html, output_path, configuration=config, options=options)
     return output_path
