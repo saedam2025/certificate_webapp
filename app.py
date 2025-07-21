@@ -7,7 +7,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo # ✅ 미국 서버를 한국 시간으로 조정
 from flask import render_template_string
+
+# ✅ 한국 시간 반환 함수
+def now_kst():
+    return datetime.now(ZoneInfo("Asia/Seoul"))
 
 import shutil
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
