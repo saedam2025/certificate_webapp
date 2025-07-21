@@ -132,12 +132,12 @@ def generate_pdf(row, 발급번호, system):
         시작=시작일,
         종료=종료일,
         종료사유=row.get("종료사유", ""),
-        발급일자=datetime.today().strftime("%Y년 %m월 %d일"),
+        발급일자=now_kst().strftime("%Y년 %m월 %d일"),
         발급번호=발급번호
     )
     seal_path = os.path.abspath(SEAL_IMAGE)
     html = html.replace('src="seal.gif"', f'src="file:///{seal_path}"')
-    output_dir = f"output_pdfs{system[-2:]}"
+    output_dir = os.path.join("/mnt/data", f"output_pdfs{system[-2:]}")
     os.makedirs(output_dir, exist_ok=True)
     cert_type = row.get("증명서종류", "증명서").replace(" ", "")
     output_path = os.path.join(output_dir, f"{발급번호}_{row['성명']}_{cert_type}.pdf")
