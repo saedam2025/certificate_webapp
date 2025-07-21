@@ -39,9 +39,8 @@ ADMIN_EMAILS = {
 }
 
 SEAL_IMAGE = "seal.gif"
-WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-EMAIL_ADDRESS = "lunch9797@gmail.com"
-APP_PASSWORD = "txnb ofpi jgys jpfq"
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
  # 신청오면 메일보내주기 시작----------
 def send_admin_notification(system, name, cert_type):
