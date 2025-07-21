@@ -8,12 +8,15 @@ from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from flask import render_template_string
-os.makedirs("output_pdfs01", exist_ok=True)
-os.makedirs("output_pdfs02", exist_ok=True)
 
-app = Flask(__name__, template_folder=".")
-app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
+# 로컬용: 현재 폴더 / Render용: /mnt/data 에다가 pdf 저장 폴더 만듦.
+base_dir = "/mnt/data" if os.path.exists("/mnt/data") else "."
 
+pdf_folder1 = os.path.join(base_dir, "output_pdfs01")
+pdf_folder2 = os.path.join(base_dir, "output_pdfs02")
+
+os.makedirs(pdf_folder1, exist_ok=True)
+os.makedirs(pdf_folder2, exist_ok=True)
 
 # 시스템별 비밀번호
 USER_PASSWORDS = {
