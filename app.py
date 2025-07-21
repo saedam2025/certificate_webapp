@@ -9,6 +9,8 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from flask import render_template_string
 
+app = Flask(__name__)
+
 # 로컬용: 현재 폴더 / Render용: /mnt/data 에다가 pdf 저장 폴더 만듦.
 base_dir = "/mnt/data" if os.path.exists("/mnt/data") else "."
 
