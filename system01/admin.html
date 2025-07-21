@@ -561,6 +561,19 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const editButtons = document.querySelectorAll(".btn.save");
+    editButtons.forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        if (!confirm("수정하시겠습니까?")) {
+          e.preventDefault();
+        }
+      });
+    });
+  });
+</script>
+
 <br><br><br><br>
 </body>
 </html>
