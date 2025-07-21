@@ -88,7 +88,7 @@ def format_korean_date(date_str):
 def get_issue_number_from_excel(data_path):
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
-    year_prefix = datetime.today().strftime('%y')
+    year_prefix = now_kst().strftime('%y')
     df = df[df["발급번호"].astype(str).str.startswith(f"제{year_prefix}-", na=False)]
     nums = [int(val.split("-")[1].replace("호", "")) for val in df["발급번호"].dropna() if "-" in val]
     return (max(nums) if nums else 0) + 1
@@ -196,7 +196,7 @@ def submit(system):
 
     form_data = dict(request.form)
     form_data["근무종료일"] = "현재까지" if form_data.get("종료일선택") == "현재까지" else form_data.get("근무종료일", "")
-    form_data["신청일"] = datetime.today().strftime("%Y-%m-%d")
+    form_data["신청일"] = now_kst().strftime("%Y-%m-%d")
     form_data["상태"] = "대기"
     form_data["발급일"] = ""
     if "종료일선택" in form_data:
@@ -311,13 +311,13 @@ def generate(system, idx):
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
     row = df.iloc[idx]
-    발급번호 = f"제{datetime.today().strftime('%y')}-{get_issue_number_from_excel(data_path)}호"
+    발급번호 = f"제{now_kst().strftime('%y')}-{get_issue_number_from_excel(data_path)}호"
     pdf = generate_pdf(row, 발급번호, system)
     send_email(row["이메일주소"], row["성명"], pdf, row["증명서종류"])
     original_df = pd.read_excel(data_path)
     original_index = len(original_df) - 1 - idx
     original_df.at[original_index, "상태"] = "발급완료"
-    original_df.at[original_index, "발급일"] = datetime.today().strftime("%Y-%m-%d")
+    original_df.at[original_index, "발급일"] = now_kst().strftime("%Y-%m-%d")
     original_df.at[original_index, "발급번호"] = 발급번호
     original_df.to_excel(data_path, index=False)
     return redirect(url_for("admin", system=system, page=page))  # 🔹 해당 페이지로 이동
