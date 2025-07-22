@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>신청 완료</title>
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<style>
+  body {
+    font-family: 'Nanum Gothic', sans-serif;
+    text-align: center;
+    padding: 100px 20px;
+    background-color: #fff;
+  }
+
+  h1 {
+    font-size: 26px;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+
+  p.description {
+    font-size: 16px;
+    margin-bottom: 35px;
+    color: #333;
+  }
+
+  .summary-box {
+    display: inline-block;
+    border: 2px solid #ccc;
+    border-radius: 12px;
+    padding: 40px 40px;
+    margin-bottom: 45px;
+    background-color: #f8f8f8;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    font-size: 15px; /* ✅ 폰트 크기 작게 */
+    min-width: 420px;
+  }
+
+  .summary-box p {
+    margin: 12px 0;
+  }
+
+.summary-box strong {
+  display: inline-block;
+  width: 160px;  /* 또는 170~180px까지도 가능 */
+  vertical-align: top;  /* 위 정렬도 함께 하면 더 보기 좋음 */
+}
+
+  .btn-home {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 14px;
+    background-color: #cba6f7;
+    color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+  }
+
+  .btn-home:hover {
+    background-color: #b38ee6;
+  }
+</style>
+</head>
+<body>
+
+  <h1>신청이 완료되었습니다!</h1>
+  <p class="description">확인 후 담당자가 발급해드립니다.</p>
+
+  <div class="summary-box">
+    <p><strong>증명서 종류:</strong> {{ 증명서종류 }}</p>
+  <hr style="border: none; border-top: 1px dashed #ccc; margin: 10px 0;">
+    <p><strong>신청인:</strong> {{ 성명 }}</p>
+  <hr style="border: none; border-top: 1px dashed #ccc; margin: 10px 0;">
+    <p><strong>신청날짜:</strong> {{ 신청일 }}</p>
+  <hr style="border: none; border-top: 1px dashed #ccc; margin: 10px 0;">
+   <p><strong>받으실 이메일 주소:</strong> {{ 이메일주소 }}</p>
+  <hr style="border: none; border-top: 1px dashed #ccc; margin: 10px 0;">
+  </div>
+
+  <br><br>
+
+<a class="btn-home" href="{{ url_for('show_form', system=system) }}">이전 페이지로 돌아가기</a>
+
+
+
+</body>
+</html>
