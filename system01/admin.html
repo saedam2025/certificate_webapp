@@ -349,7 +349,9 @@ a.btn.issue:hover {
             <td><input type="text" name="근무장소" value="{{ row.근무장소 }}"></td>
             <td><input type="text" name="근무시작일" value="{{ row.근무시작일 }}"></td>
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
-            <td><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 15px; vertical-align: middle;"></td>
+            <td>
+<img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 15px; vertical-align: middle;" onclick="editEmail(this)" data-email="example@domain.com" style="cursor:pointer; width:20px;">
+</td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
             <td>{{ row.신청일 }}</td>
@@ -571,6 +573,42 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 </script>
+
+<div id="emailModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -50%);
+  background:white; border:1px solid #ccc; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:9999;">
+  <h4>메일주소 수정</h4>
+  <input type="text" id="emailInput" style="width:100%; padding:8px; margin-top:8px;">
+  <div style="margin-top:12px; text-align:right;">
+    <button onclick="saveEmail()">저장</button>
+    <button onclick="closeModal()">취소</button>
+  </div>
+</div>
+
+<script>
+  let currentEmailElement = null;
+
+  function editEmail(span) {
+    currentEmailElement = span;
+    const email = span.dataset.email;
+    document.getElementById('emailInput').value = email;
+    document.getElementById('emailModal').style.display = 'block';
+  }
+
+  function saveEmail() {
+    const newEmail = document.getElementById('emailInput').value;
+    if (currentEmailElement) {
+      currentEmailElement.dataset.email = newEmail;
+      alert("새 이메일 주소: " + newEmail);
+      // 여기에 서버 전송 로직 (AJAX 등) 추가 가능
+    }
+    closeModal();
+  }
+
+  function closeModal() {
+    document.getElementById('emailModal').style.display = 'none';
+  }
+</script>
+
 
 <br><br><br><br>
 </body>
