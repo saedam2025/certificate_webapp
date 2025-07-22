@@ -326,7 +326,7 @@ a.btn.issue:hover {
         <th style="width: 100px;">장소</th>
         <th style="width: 80px;">근무시작일</th>
         <th style="width: 80px;">근무종료일</th>
-        <th style="width: 20px;">이메일</th>
+        <th style="width: 30px;">메일</th>
         <th style="width: 70px;">종료사유</th>
         <th style="width: 85px;">상태<br>(발급번호)</th>
         <th style="width: 175px;">작업</th>
@@ -349,7 +349,7 @@ a.btn.issue:hover {
             <td><input type="text" name="근무장소" value="{{ row.근무장소 }}"></td>
             <td><input type="text" name="근무시작일" value="{{ row.근무시작일 }}"></td>
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
-            <td><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 20px; vertical-align: middle;"></td>
+            <td><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 10px; vertical-align: middle;"></td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
             <td>{{ row.신청일 }}</td>
