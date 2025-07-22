@@ -18,7 +18,7 @@ body {
   padding: 0;
 }
     .container {
-      width: 1750px;   /* ✅ 메인 데이터 테이블 가로크기===================== */
+      width: 1700px;   /* ✅ 메인 데이터 테이블 가로크기===================== */
       margin: 20px auto;
       background: white;
       border-radius: 12px;
@@ -329,7 +329,7 @@ a.btn.issue:hover {
         <th style="width: 30px;">메일</th>
         <th style="width: 70px;">종료사유</th>
         <th style="width: 85px;">상태<br>(발급번호)</th>
-        <th style="width: 175px;">작업</th>
+        <th style="width: 165px;">작업</th>
       </tr>
     </thead>
     <tbody>
@@ -500,7 +500,7 @@ a.btn.issue:hover {
           return;
         }
 
-        btn.textContent = "발급중";     // 버튼 텍스트 변경
+        btn.textContent = "..ing";     // 버튼 텍스트 변경
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
