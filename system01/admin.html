@@ -376,10 +376,12 @@ a.btn.issue:hover {
   </td>
 
   <td>
-      <!-- ✅ 삭제 버튼: 항상 표시 -->
-      <form method="POST" action="/{{ system }}/delete/{{ loop.index0 + (page - 1) * 10 }}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-        <button type="submit" class="btn btn-delete">삭제</button>
-      </form>
+{% if row.상태 != "발급완료" %}
+<!-- ✅ 삭제 버튼: 대기 상태일 때만 표시 -->
+<form method="POST" action="/{{ system }}/delete/{{ loop.index0 + (page - 1) * 10 }}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+  <button type="submit" class="btn btn-delete">삭제</button>
+</form>
+{% endif %}
 
       {% if row.상태 == "대기" %}
       <!-- ✅ 수정 버튼 -->
