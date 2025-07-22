@@ -326,7 +326,7 @@ a.btn.issue:hover {
         <th style="width: 100px;">장소</th>
         <th style="width: 80px;">근무시작일</th>
         <th style="width: 80px;">근무종료일</th>
-        <th style="width: 160px;">이메일</th>
+        <th style="width: 20px;">이메일</th>
         <th style="width: 70px;">종료사유</th>
         <th style="width: 85px;">상태<br>(발급번호)</th>
         <th style="width: 175px;">작업</th>
@@ -349,12 +349,12 @@ a.btn.issue:hover {
             <td><input type="text" name="근무장소" value="{{ row.근무장소 }}"></td>
             <td><input type="text" name="근무시작일" value="{{ row.근무시작일 }}"></td>
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
-            <td><input type="email" name="이메일주소" value="{{ row.이메일주소 }}"></td>
+            <td><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 20px; vertical-align: middle;"></td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
             <td>{{ row.신청일 }}</td>
             <td>{{ row.증명서종류 }}</td>
-            <td title="{{ row.자택주소 }},{{ row.이메일주소 }}">{{ row.성명 }}</td>
+            <td title="{{ row.자택주소 }}">{{ row.성명 }}</td>
             <td>{{ row.주민번호 }}</td>
             <td>{{ row.직책 }}</td>     
             <td>{{ row.강의과목 }}</td>
@@ -362,7 +362,7 @@ a.btn.issue:hover {
             <td>{{ row.근무장소 }}</td>
             <td>{{ row.근무시작일 }}</td>
             <td>{{ row.근무종료일 }}</td>
-                 <td>{{ row.이메일주소 }}</td>
+                 <td><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 20px; vertical-align: middle;"></td>
             <td>{{ row.종료사유 }}</td>
           {% endif %}
 <td>
