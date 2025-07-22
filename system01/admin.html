@@ -365,27 +365,35 @@ a.btn.issue:hover {
                  <td>{{ row.이메일주소 }}</td>
             <td>{{ row.종료사유 }}</td>
           {% endif %}
-<td>
-  {% if row.상태 == "발급완료" and row.발급번호 %}
-<a class="pdf-link" href="/{{ system }}/pdf/{{ row.발급번호 }}_{{ row.성명 }}_{{ row.증명서종류.replace(' ', '') }}.pdf" target="_blank">
-  {{ row.발급번호 }}
-</a>
-  {% else %}
-    발급대기
-  {% endif %}
-</td>
-<td>
-  <form method="POST" action="/{{ system }}/delete/{{ loop.index0 + (page - 1) * 10 }}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-    <button type="submit" class="btn btn-delete">삭제</button>
-  </form>
-  {% if row.상태 == "대기" %}
-    <button type="submit" class="btn save">수정</button>
-    <a href="/{{ system }}/generate/{{ loop.index0 + (page - 1) * 10 }}?page={{ page }}" class="btn issue generate-btn">발급</a>
-  {% else %}
-    발급일: {{ row.발급일 }}
-  {% endif %}
-</td>
-        </tr>
+  <td>
+    {% if row.상태 == "발급완료" and row.발급번호 %}
+      <a class="pdf-link" href="/{{ system }}/pdf/{{ row.발급번호 }}_{{ row.성명 }}_{{ row.증명서종류.replace(' ', '') }}.pdf" target="_blank">
+        {{ row.발급번호 }}
+      </a>
+    {% else %}
+      발급대기
+    {% endif %}
+  </td>
+
+  <td>
+    <!-- ✅ 삭제 버튼: 항상 존재 -->
+    <form method="POST" action="/{{ system }}/delete/{{ loop.index0 + (page - 1) * 10 }}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+      <button type="submit" class="btn btn-delete">삭제</button>
+    </form>
+
+    {% if row.상태 == "대기" %}
+      <!-- ✅ 수정 버튼: 대기일 때만 -->
+      <form method="POST" action="/{{ system }}/update/{{ loop.index0 + (page - 1) * 10 }}" style="display:inline;">
+        <input type="hidden" name="page" value="{{ page }}">
+        <button type="submit" class="btn save">수정</button>
+      </form>
+
+      <!-- ✅ 발급 버튼 -->
+      <a href="/{{ system }}/generate/{{ loop.index0 + (page - 1) * 10 }}?page={{ page }}" class="btn issue generate-btn">발급</a>
+    {% else %}
+      발급일: {{ row.발급일 }}
+    {% endif %}
+  </td>        </tr>
       </form>
       {% endfor %}
     </tbody>
