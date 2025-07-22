@@ -9,12 +9,36 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo # ✅ 미국 서버를 한국 시간으로 조정
 from flask import render_template_string
+import shutil
 
 # ✅ 한국 시간 반환 함수
 def now_kst():
     return datetime.now(ZoneInfo("Asia/Seoul"))
 
-import shutil
+# ✅ 연도 접두어 생성
+def get_year_prefix():
+    return now_kst().strftime('%y')
+
+# ✅ 중복 방지용 발급번호 생성기
+def get_next_issue_number():
+    year_prefix = get_year_prefix()
+    file_name = f"last_number_{year_prefix}.txt"
+
+    if not os.path.exists(file_name):
+        with open(file_name, 'w') as f:
+            f.write("0")
+        last = 0
+    else:
+        with open(file_name, 'r') as f:
+            last = int(f.read().strip())
+
+    next_number = last + 1
+
+    with open(file_name, 'w') as f:
+        f.write(str(next_number))
+
+    return f"제{year_prefix}-{next_number:04d}호"
+
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
 config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
@@ -84,14 +108,6 @@ def ensure_data_file(data_path):
 def format_korean_date(date_str):
     dt = datetime.strptime(date_str, "%Y-%m-%d")
     return dt.strftime("%Y년 %#m월 %#d일")
-
-def get_issue_number_from_excel(data_path):
-    ensure_data_file(data_path)
-    df = pd.read_excel(data_path)
-    year_prefix = now_kst().strftime('%y')
-    df = df[df["발급번호"].astype(str).str.startswith(f"제{year_prefix}-", na=False)]
-    nums = [int(val.split("-")[1].replace("호", "")) for val in df["발급번호"].dropna() if "-" in val]
-    return (max(nums) if nums else 0) + 1
 
 def send_email(to_email, name, pdf_path, certificate_type):
     msg = MIMEMultipart()
@@ -308,24 +324,30 @@ def download_pdf(system, filename):
     pdf_dir = f"/mnt/data/output_pdfs{system[-2:]}"  # 예: output_pdfs01
     return send_from_directory(pdf_dir, filename)
 
+# ✅ 발급번호 생성 방식 변경 적용된 generate 함수
 @app.route("/<system>/generate/<int:idx>")
 def generate(system, idx):
     data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    page = int(request.args.get("page", 1))  # 🔹 쿼리스트링에서 page 받기
+    page = int(request.args.get("page", 1))
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
     row = df.iloc[idx]
-    발급번호 = f"제{now_kst().strftime('%y')}-{get_issue_number_from_excel(data_path)}호"
+
+    # ✅ 발급번호 생성 방식 변경
+    발급번호 = get_next_issue_number()
+
     pdf = generate_pdf(row, 발급번호, system)
     send_email(row["이메일주소"], row["성명"], pdf, row["증명서종류"])
+
     original_df = pd.read_excel(data_path)
     original_index = len(original_df) - 1 - idx
     original_df.at[original_index, "상태"] = "발급완료"
     original_df.at[original_index, "발급일"] = now_kst().strftime("%Y-%m-%d")
     original_df.at[original_index, "발급번호"] = 발급번호
     original_df.to_excel(data_path, index=False)
-    return redirect(url_for("admin", system=system, page=page))  # 🔹 해당 페이지로 이동
+
+    return redirect(url_for("admin", system=system, page=page))
 
 @app.route("/<system>/pdf/<filename>")
 def serve_pdf(system, filename):
