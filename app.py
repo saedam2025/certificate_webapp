@@ -15,29 +15,34 @@ import shutil
 def now_kst():
     return datetime.now(ZoneInfo("Asia/Seoul"))
 
-# ✅ 연도 접두어 생성
+# ✅ 발급번호 생성============================
 def get_year_prefix():
     return now_kst().strftime('%y')
 
-# ✅ 중복 방지용 발급번호 생성기
 def get_next_issue_number():
     year_prefix = get_year_prefix()
-    file_name = f"last_number_{year_prefix}.txt"
+    file_name = os.path.join("/mnt/data", f"last_number_{year_prefix}.txt")
 
+    # 파일이 없으면 0부터 시작
     if not os.path.exists(file_name):
-        with open(file_name, 'w') as f:
-            f.write("0")
         last = 0
     else:
         with open(file_name, 'r') as f:
-            last = int(f.read().strip())
+            try:
+                last = int(f.read().strip())
+            except ValueError:
+                last = 0  # 혹시 파일 내용이 비어있거나 이상할 경우 대비
 
     next_number = last + 1
 
+    # 새로운 번호 저장
     with open(file_name, 'w') as f:
         f.write(str(next_number))
 
     return f"제{year_prefix}-{next_number:04d}호"
+# ✅ 발급번호 생성============================
+
+
 
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
 config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
