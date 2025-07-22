@@ -354,6 +354,36 @@ def generate(system, idx):
 
     return redirect(url_for("admin", system=system, page=page))
 
+# ✅ 삭제 라우트: 엑셀 행 + PDF 함께 삭제
+@app.route("/<system>/delete/<int:idx>", methods=["POST"])
+def delete_submission(system, idx):
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    ensure_data_file(data_path)
+    df = pd.read_excel(data_path)
+    df = df.iloc[::-1].reset_index(drop=True)
+    row = df.iloc[idx]
+
+    # PDF 파일 삭제 시도
+    발급번호 = str(row.get("발급번호", "")).strip()
+    성명 = str(row.get("성명", "")).strip()
+    cert_type = str(row.get("증명서종류", "증명서")).replace(" ", "")
+    pdf_folder = os.path.join(base_dir, f"output_pdfs{system[-2:]}")
+    pdf_filename = f"{발급번호}_{성명}_{cert_type}.pdf"
+    pdf_path = os.path.join(pdf_folder, pdf_filename)
+
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
+    # 행 삭제 후 역순 저장
+    df = df.drop(index=idx).reset_index(drop=True)
+    final_df = df.iloc[::-1].reset_index(drop=True)
+    final_df.to_excel(data_path, index=False)
+
+    flash("삭제가 완료되었습니다.")
+    return redirect(url_for("admin", system=system))
+
+
+# ✅  PDF 생성
 @app.route("/<system>/pdf/<filename>")
 def serve_pdf(system, filename):
     return send_from_directory(f"output_pdfs{system[-2:]}", filename)

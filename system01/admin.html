@@ -279,9 +279,9 @@ a.btn.issue:hover {
 {% endif %}
 
 <div id="cloudContainer">
-  <img src="http://www.saedam.org/img_sub/cloud01.png" class="floatingCloud" style="top: 40px; left: 15%;">
-  <img src="http://www.saedam.org/img_sub/cloud02.png" class="floatingCloud" style="top: 110px; left: 65%;">
-  <img src="http://www.saedam.org/img_sub/cloud03.png" class="floatingCloud" style="top: 20px; left: 90%;">
+  <img src="https://www.saedam.org/img_sub/cloud01.png" class="floatingCloud" style="top: 40px; left: 15%;">
+  <img src="https://www.saedam.org/img_sub/cloud02.png" class="floatingCloud" style="top: 110px; left: 65%;">
+  <img src="https://www.saedam.org/img_sub/cloud03.png" class="floatingCloud" style="top: 20px; left: 90%;">
 </div>
 
   <!-- 상단 캐릭터 이미지 및 제목 -->
@@ -374,15 +374,17 @@ a.btn.issue:hover {
     발급대기
   {% endif %}
 </td>
-          <td>
-            {% if row.상태 == "대기" %}
-              <a href="/{{ system }}/delete/{{ loop.index0 + (page - 1) * 10 }}?page={{ page }}" class="btn btn-delete">삭제</a>
-              <button type="submit" class="btn save">수정</button>
-              <a href="/{{ system }}/generate/{{ loop.index0 + (page - 1) * 10 }}?page={{ page }}" class="btn issue generate-btn">발급</a>
-            {% else %}
-              발급일: {{ row.발급일 }}
-            {% endif %}
-          </td>
+<td>
+  <form method="POST" action="/{{ system }}/delete/{{ loop.index0 + (page - 1) * 10 }}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+    <button type="submit" class="btn btn-delete">삭제</button>
+  </form>
+  {% if row.상태 == "대기" %}
+    <button type="submit" class="btn save">수정</button>
+    <a href="/{{ system }}/generate/{{ loop.index0 + (page - 1) * 10 }}?page={{ page }}" class="btn issue generate-btn">발급</a>
+  {% else %}
+    발급일: {{ row.발급일 }}
+  {% endif %}
+</td>
         </tr>
       </form>
       {% endfor %}
@@ -395,7 +397,7 @@ a.btn.issue:hover {
     발급완료 {{ issued_count }}건 /
     발급대기 {{ pending_count }}건  
 <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 20px;">
-  <img src="http://www.saedam.org/img_sub/logout2.png" alt="로그아웃" title="로그아웃" style="height: 30px; vertical-align: middle;">
+  <img src="https://www.saedam.org/img_sub/logout2.png" alt="로그아웃" title="로그아웃" style="height: 30px; vertical-align: middle;">
 </a>
   </div>
 
@@ -463,7 +465,7 @@ a.btn.issue:hover {
     left: 50%;
     transform: translateX(-50%);
   ">
-    <img src="http://www.saedam.org/img_sub/logo.gif" alt="로고" style="height: 48px; width: auto;">
+    <img src="https://www.saedam.org/img_sub/logo.gif" alt="로고" style="height: 48px; width: auto;">
   </div>
 
   <!-- 카피라이트 문구 -->
@@ -527,7 +529,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 랜덤 이미지 설정
   const randomNum = Math.floor(Math.random() * 7) + 1;
-  alertImg.src = `http://www.saedam.org/img_sub/issue_alert0${randomNum}.png`;
+  alertImg.src = `https://www.saedam.org/img_sub/issue_alert0${randomNum}.png`;
 
   // ✅ 고정된 위치 기준에서 드래그 처리
   let isDragging = false;
