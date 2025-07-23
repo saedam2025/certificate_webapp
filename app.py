@@ -307,16 +307,17 @@ def admin(system, page):
     end = start + 10
     submissions = df.iloc[start:end].fillna("").to_dict(orient="records")
 
- return render_template(
-    f"{system}/admin.html",
-    submissions=submissions,
-    total_count=total_count,
-    issued_count=issued_count,
-    pending_count=pending_count,
-    total_pages=total_pages,
-    page=page,
-    system=system
-)
+    return render_template(
+        f"{system}/admin.html",
+        submissions=submissions,
+        df=df,  # 
+        total_count=total_count,
+        issued_count=issued_count,
+        pending_count=pending_count,
+        total_pages=total_pages,
+        page=page,
+        system=system
+    )
 
 
 @app.route("/<system>/logout")
