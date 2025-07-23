@@ -83,7 +83,7 @@ a.btn, button.btn {
   transition: all 0.3s ease;
 
   min-width: 50px;   /* ✅ 너비 고정 */
-  height: 35px;       /* ✅ 높이 고정 */
+  height: 34px;       /* ✅ 높이 고정 */
 
   text-align: center;
   box-sizing: border-box;
@@ -515,7 +515,7 @@ a.btn.issue:hover {
           e.preventDefault();
           return;
         }
-        btn.innerHTML = `<img src="https://www.saedam.org/img_sub/loading.gif" style="width: 16px;">`;
+        btn.innerHTML = `<img src="https://www.saedam.org/img_sub/loading.gif" style="width: 15px;">`;
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
