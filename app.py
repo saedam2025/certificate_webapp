@@ -273,7 +273,6 @@ def show_form(system):
     return render_template(f"{system}/form.html", system=system)
 
 
-
 @app.route("/<system>/admin", defaults={'page': 1}, methods=["GET", "POST"])
 @app.route("/<system>/admin/<int:page>", methods=["GET", "POST"])
 def admin(system, page):
@@ -388,31 +387,32 @@ def delete_submission(system, idx):
 # ✅ 이메일 수정창 부분=============================
 @app.route("/<system>/update_email", methods=["POST"])
 def update_email(system):
-    index = int(request.form.get("index"))
+    index = request.form.get("index")
     new_email = request.form.get("이메일주소")
     page = request.form.get("page", 1)
 
-    file_path = f"pending_submissions_{system[-2:]}.xlsx"
+    try:
+        index = int(index)
+        page = int(page)
+    except ValueError:
+        flash("유효하지 않은 인덱스입니다.")
+        return redirect(url_for("admin", system=system, page=page))  # ✅ 함수명에 맞춰야 함
 
-    if not os.path.exists(file_path):
-        flash("파일이 존재하지 않습니다.")
-        return redirect(url_for('admin', system=system, page=page))
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    df = pd.read_excel(data_path)
+    df.reset_index(drop=True, inplace=True)  # ✅ 인덱스 초기화
 
-    # 최신순 정렬로 admin 페이지와 동일한 인덱스 맞춤
-    df = pd.read_excel(file_path)
-    df = df.iloc[::-1].reset_index(drop=True)
+    if index < 0 or index >= len(df):
+        flash("유효하지 않은 인덱스입니다.")
+        return redirect(url_for("admin", system=system, page=page))
 
-    if 0 <= index < len(df):
-        df.at[index, "이메일주소"] = new_email
+    df.at[index, "이메일주소"] = new_email
+    df.to_excel(data_path, index=False)
 
-        # 저장 시 다시 원래 순서로 되돌려 저장
-        df = df.iloc[::-1].reset_index(drop=True)
-        df.to_excel(file_path, index=False)
-        flash("이메일이 수정되었습니다.")
-    else:
-        flash("⚠️ 유효하지 않은 인덱스입니다.")
+    flash("이메일이 성공적으로 수정되었습니다.")
+    return redirect(url_for("admin", system=system, page=page))  # ✅ 여기도 동일하게
 
-    return redirect(url_for('admin', system=system, page=page))
+
 
 
 # ✅  PDF 생성
