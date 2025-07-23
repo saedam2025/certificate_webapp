@@ -601,16 +601,12 @@ function openEmailModal(index, email) {
   document.querySelector('#modalIndex').value = index;
   document.querySelector('#emailModal').style.display = 'block';
 
-  const system = location.pathname.split('/')[1];
+  const system = location.pathname.split('/')[1];  // 예: system01
   document.querySelector('#emailForm').action = `/${system}/update_email`;
 
   setTimeout(() => {
     document.querySelector('#modalEmail').focus();
   }, 100);
-}
-
-function closeEmailModal() {
-  document.querySelector('#emailModal').style.display = 'none';
 }
 </script>
 
