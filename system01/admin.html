@@ -639,7 +639,7 @@ function copyEmailToClipboard(element) {
     // 클립보드에 복사
     navigator.clipboard.writeText(email)
         .then(() => {
-            alert(`이메일 주소가 복사되었습니다:\n${email}`);
+            alert(`클립보드로 이메일 주소가 복사되었습니다:\n${email}`);
         })
         .catch(err => {
             console.error('클립보드 복사 실패:', err);
