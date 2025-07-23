@@ -595,31 +595,34 @@ function openEmailModal(index) {
   document.querySelector('#modalEmail').value = email;
   document.querySelector('#modalIndex').value = index;
   document.querySelector('#emailModal').style.display = 'block';
+
+  // 이메일 입력창 자동 포커스
+  setTimeout(() => {
+    document.querySelector('#modalEmail').focus();
+  }, 100);
 }
 
 function closeEmailModal() {
   document.querySelector('#emailModal').style.display = 'none';
 }
 
-// 저장 시 해당 input 태그의 값을 바꾸고 폼 자동 제출
 function saveEmail() {
   const index = document.querySelector('#modalIndex').value;
   const newEmail = document.querySelector('#modalEmail').value;
 
-  // 이메일 input 값을 변경
+  // 해당 행의 이메일 input 값을 변경
   const emailInput = document.querySelector(`#email_${index}`);
   emailInput.value = newEmail;
 
-  // ✅ 그 행의 "수정" 버튼 클릭 유도
+  // ✅ 해당 행의 form을 찾아서 자동으로 submit (수정 버튼 클릭 대신)
   const form = emailInput.closest('form');
-  const saveButton = form.querySelector('button.save');
-  saveButton.click();
+  form.submit();  // ← 이 한 줄이면 직접 수정 버튼 누를 필요 없음
 
-  // 모달 닫기
+  // 팝업 닫기
   closeEmailModal();
 }
-
 </script>
+
   <!-- 창뛰워 이메일 수정하기 끝 -->
 
 <br><br><br><br>
