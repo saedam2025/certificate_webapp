@@ -582,6 +582,7 @@ document.addEventListener("DOMContentLoaded", function () {
   <!-- 창뛰워 이메일 수정하기 -->
 
 <!-- 이메일 수정 모달창 -->
+<!-- 이메일 수정 모달창 -->
 <div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
   <h3>이메일 수정</h3>
   <form id="emailForm" method="POST">
@@ -601,9 +602,8 @@ function openEmailModal(index) {
   document.querySelector('#modalIndex').value = index;
   document.querySelector('#emailModal').style.display = 'block';
 
-  // ✅ action 경로를 동적으로 지정 (현재 주소에서 system 추출)
-  const pathParts = window.location.pathname.split('/');
-  const system = pathParts[1];  // e.g., system01
+  // ✅ system 값을 현재 주소에서 추출해서 action 설정
+  const system = location.pathname.split('/')[1];
   document.querySelector('#emailForm').action = `/${system}/update_email`;
 
   setTimeout(() => {
@@ -615,7 +615,6 @@ function closeEmailModal() {
   document.querySelector('#emailModal').style.display = 'none';
 }
 </script>
-
   <!-- 창뛰워 이메일 수정하기 끝 -->
 
 <br><br><br><br>
