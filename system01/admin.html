@@ -349,7 +349,14 @@ a.btn.issue:hover {
             <td><input type="text" name="근무장소" value="{{ row.근무장소 }}"></td>
             <td><input type="text" name="근무시작일" value="{{ row.근무시작일 }}"></td>
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
-            <td><input type="email" name="이메일주소" value="{{ row.이메일주소 }}"><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 15px; vertical-align: middle;"></td>
+<td>
+  <input type="hidden" name="이메일주소" value="{{ row.이메일주소 }}" id="email_{{ loop.index0 }}">
+  <img src="https://www.saedam.org/img_sub/mail.png"
+       alt="메일"
+       title="{{ row.이메일주소 }}"
+       style="height: 15px; vertical-align: middle; cursor: pointer;"
+       onclick="openEmailModal({{ loop.index0 }})">
+</td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
             <td>{{ row.신청일 }}</td>
@@ -571,6 +578,42 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 </script>
+
+  <!-- 창뛰워 이메일 수정하기 -->
+
+<div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
+  <h3>이메일 수정</h3>
+  <input type="email" id="modalEmail" style="width:100%; padding:8px; font-size:14px;">
+  <input type="hidden" id="modalIndex">
+  <br><br>
+  <button onclick="saveEmail()">저장</button>
+  <button onclick="closeEmailModal()">닫기</button>
+</div>
+<script>
+function openEmailModal(index) {
+  const email = document.querySelector(`#email_${index}`).value;
+  document.querySelector('#modalEmail').value = email;
+  document.querySelector('#modalIndex').value = index;
+  document.querySelector('#emailModal').style.display = 'block';
+}
+
+function closeEmailModal() {
+  document.querySelector('#emailModal').style.display = 'none';
+}
+
+// 저장 시 해당 input 태그의 값을 바꾸고 폼 자동 제출
+function saveEmail() {
+  const index = document.querySelector('#modalIndex').value;
+  const newEmail = document.querySelector('#modalEmail').value;
+  const emailInput = document.querySelector(`#email_${index}`);
+  emailInput.value = newEmail;
+
+  // 그 행의 form을 찾아서 submit (폼은 td의 상위 요소)
+  const form = emailInput.closest('form');
+  form.submit();
+}
+</script>
+  <!-- 창뛰워 이메일 수정하기 끝 -->
 
 <br><br><br><br>
 </body>
