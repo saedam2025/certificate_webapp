@@ -261,8 +261,15 @@ def form_login(system):
             flash("비밀번호가 틀렸습니다.")
             return redirect(url_for('form_login', system=system))
     
-    # ✅ 들여쓰기 수정됨
     return render_template(f"{system}/form_login.html", system=system, title="경력증명서 신청")
+
+@app.route('/<system>/form_page', methods=['GET', 'POST'])
+def show_form(system):
+    if not session.get(f'user_authenticated_{system}'):
+        flash("접근 권한이 없습니다.")
+        return redirect(url_for('form_login', system=system))
+
+    return render_template(f"{system}/form.html", system=system)
 
     #로그인 처리 ----------------------------------------------------------------------------))))))
 
