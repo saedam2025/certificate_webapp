@@ -351,11 +351,11 @@ a.btn.issue:hover {
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
 <td>
   <input type="hidden" name="이메일주소" value="{{ row.이메일주소 }}" id="email_{{ loop.index0 }}">
-  <img src="https://www.saedam.org/img_sub/mail.png"
-       alt="메일"
-       title="{{ row.이메일주소 }}"
-       style="height: 15px; vertical-align: middle; cursor: pointer;"
-       onclick="openEmailModal({{ loop.index0 }})">
+<img src="https://www.saedam.org/img_sub/mail.png"
+     alt="메일"
+     title="{{ row.이메일주소 }}"
+     style="height: 15px; vertical-align: middle; cursor: pointer;"
+     onclick="openEmailModal({{ loop.index0 + (page - 1) * 10 }}, '{{ row.이메일주소 }}')">
 </td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
@@ -582,7 +582,6 @@ document.addEventListener("DOMContentLoaded", function () {
   <!-- 창뛰워 이메일 수정하기 -->
 
 <!-- 이메일 수정 모달창 -->
-<!-- 이메일 수정 모달창 -->
 <div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
   <h3>이메일 수정</h3>
   <form id="emailForm" method="POST">
@@ -595,14 +594,13 @@ document.addEventListener("DOMContentLoaded", function () {
   </form>
 </div>
 
+  <!-- 창뛰워 이메일 수정하기  ----->
 <script>
-function openEmailModal(index) {
-  const email = document.querySelector(`#email_${index}`).value;
+function openEmailModal(index, email) {
   document.querySelector('#modalEmail').value = email;
   document.querySelector('#modalIndex').value = index;
   document.querySelector('#emailModal').style.display = 'block';
 
-  // ✅ system 값을 현재 주소에서 추출해서 action 설정
   const system = location.pathname.split('/')[1];
   document.querySelector('#emailForm').action = `/${system}/update_email`;
 
@@ -615,6 +613,7 @@ function closeEmailModal() {
   document.querySelector('#emailModal').style.display = 'none';
 }
 </script>
+
   <!-- 창뛰워 이메일 수정하기 끝 -->
 
 <br><br><br><br>
