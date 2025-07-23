@@ -323,8 +323,7 @@ a.btn.issue:hover {
   <table>
     <thead>
       <tr>
-        <th style="width: 30px; height: 35px; display: flex; justify-content: center; align-items: center;>
-        <input type="checkbox" onclick="toggleAll(this)"></th> <!-- 전체 선택 셀렉트 버튼 -->
+        <th style="width: 30px; height: 35px;"><input type="checkbox" onclick="toggleAll(this)"></th> <!-- 전체 선택 셀렉트 버튼 -->
         <th style="width: 30px; height: 35px;">No</th>
         <th style="width: 70px;">신청일</th>
         <th style="width: 100px;">증명서종류</th>
@@ -347,8 +346,7 @@ a.btn.issue:hover {
       <form method="POST" action="/{{ system }}/update/{{ loop.index0 + (page - 1) * 10 }}">
       <input type="hidden" name="page" value="{{ page }}">
         <tr>
-          <td style="height: 35px; display: flex; justify-content: center; align-items: center;">
-          <input type="checkbox" name="selected_rows" value="{{ loop.index0 + (page - 1) * 10 }}"></td>
+          <td style="height: 35px;"><input type="checkbox" name="selected_rows" value="{{ loop.index0 + (page - 1) * 10 }}"></td>
           <td style="height: 35px;">{{ (total_count - ((page - 1) * 10 + loop.index0)) }}</td>
           {% if row.상태 == "대기" %}
             <td><input type="text" name="신청일" value="{{ row.신청일 }}" readonly></td>
@@ -416,7 +414,7 @@ a.btn.issue:hover {
 
 
 <!-- ✅ 전체 summary bar -->
-<div class="summary-pagination" style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+<div class="summary-pagination" style="display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0;">
 
   <!-- ✅ 왼쪽: 선택삭제 버튼 + 카운터 박스 수평 나란히 -->
   <div style="display: flex; align-items: center; gap: 10px;">
