@@ -396,8 +396,8 @@ def update_email(system):
         df.to_excel(data_path, index=False)
 
     flash("메일주소가 수정되었습니다.")
-    return redirect(url_for('admin_page', system=system, page=page))
-    # admin_page 함수명에 맞게 수정!
+    return redirect(url_for('admin', system=system, page=page))
+  
 
 
 # ✅  PDF 생성
