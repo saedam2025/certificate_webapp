@@ -494,6 +494,8 @@ a.btn.issue:hover {
     });
   });
 </script>
+
+  <!-- 모래시계 돌게하기 -->
 <style>
 @keyframes slideText {
   0%   { transform: translateX(0); }
@@ -510,20 +512,18 @@ a.btn.issue:hover {
 </style>
 
 <style>
-  @keyframes shakeText {
-    0%   { transform: translateX(0); }
-    25%  { transform: translateX(-4px); }
-    50%  { transform: translateX(4px); }
-    75%  { transform: translateX(-4px); }
-    100% { transform: translateX(0); }
+  @keyframes spinEmoji {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
-  .shaking {
-    animation: shakeText 0.5s infinite;
+  .spinning {
+    animation: spinEmoji 1s linear infinite;
     display: inline-block;
   }
 </style>
 
+  <!-- 발급버튼 여러번 누르기 방지 -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const generateButtons = document.querySelectorAll(".generate-btn");
@@ -536,13 +536,15 @@ a.btn.issue:hover {
           return;
         }
 
-        btn.innerHTML = `<span class="shaking">>>></span>`;  // 흔들리는 텍스트
+        // 회전하는 이모지 적용
+        btn.innerHTML = `<span class="spinning">⏳</span>`;
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
     });
   });
 </script>
+
   <!-- 플래시 메시지 -->
   {% with messages = get_flashed_messages() %}
     {% if messages %}
