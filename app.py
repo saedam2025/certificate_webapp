@@ -264,14 +264,7 @@ def form_login(system):
     # ✅ 들여쓰기 수정됨
     return render_template(f"{system}/form_login.html", system=system, title="경력증명서 신청")
 
-
-@app.route('/<system>/form_page', methods=['GET', 'POST'])
-def show_form(system):
-    if not session.get(f'user_authenticated_{system}'):
-        flash("접근 권한이 없습니다.")
-        return redirect(url_for('form_login', system=system))
-    return render_template(f"{system}/form.html", system=system)
-
+    #로그인 처리 ----------------------------------------------------------------------------))))))
 
 @app.route("/<system>/admin", defaults={'page': 1}, methods=["GET", "POST"])
 @app.route("/<system>/admin/<int:page>", methods=["GET", "POST"])
@@ -286,13 +279,40 @@ def admin(system, page):
             flash("비밀번호가 틀렸습니다.")
             return render_template(f"{system}/admin_login.html", system=system)
 
-    # GET 요청 시: 인증되어 있지 않으면 로그인 폼 보여줌
     if not session.get(f"{system}_authenticated"):
         return render_template(f"{system}/admin_login.html", system=system)
 
-    # 패스워드 걸기 끝===================
+    # ✅ 여기가 admin 함수의 마지막 부분
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    ensure_data_file(data_path)
+    df = pd.read_excel(data_path)
+    df = df.iloc[::-1].reset_index(drop=True)
 
-    # 게시물 선택삭제하기 ===================
+    total_count = len(df)
+    issued_count = len(df[df["상태"] == "발급완료"])
+    pending_count = len(df[df["상태"] == "대기"])
+
+    total_pages = (total_count - 1) // 10 + 1
+    start = (page - 1) * 10
+    end = start + 10
+    submissions = df.iloc[start:end].fillna("").to_dict(orient="records")
+
+    return render_template(
+        f"{system}/admin.html",
+        submissions=submissions,
+        df=df,
+        total_count=total_count,
+        issued_count=issued_count,
+        pending_count=pending_count,
+        total_pages=total_pages,
+        page=page,
+        system=system
+    )
+
+    #로그인 처리 끝 ----------------------------------------------------------------------------))))))
+
+
+    # 게시물 선택삭제하기 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @app.route("/<system>/bulk_delete", methods=["POST"])
 def bulk_delete(system):
     ids_str = request.form.get("selected_ids", "")
@@ -321,35 +341,12 @@ def bulk_delete(system):
     df.to_excel(data_path, index=False)
     flash(f"{len(selected_indices)}건이 삭제되었습니다.")
     return redirect(url_for('admin', system=system, page=page))
-    # 게시물 선택삭제 끝===================
 
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    ensure_data_file(data_path)
-    df = pd.read_excel(data_path)
-    df = df.iloc[::-1].reset_index(drop=True)  # 최신순 정렬
-
-    total_count = len(df)
-    issued_count = len(df[df["상태"] == "발급완료"])
-    pending_count = len(df[df["상태"] == "대기"])
-
-    total_pages = (total_count - 1) // 10 + 1
-    start = (page - 1) * 10
-    end = start + 10
-    submissions = df.iloc[start:end].fillna("").to_dict(orient="records")
-
-    return render_template(
-        f"{system}/admin.html",
-        submissions=submissions,
-        df=df,  # 
-        total_count=total_count,
-        issued_count=issued_count,
-        pending_count=pending_count,
-        total_pages=total_pages,
-        page=page,
-        system=system
-    )
+    # 게시물 선택삭제 끝  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+
+  #------------------------------------------------로그아웃 처리 --------------
 @app.route("/<system>/logout")
 def logout(system):
     session.pop(f"{system}_authenticated", None)
