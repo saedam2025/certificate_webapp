@@ -320,6 +320,7 @@ def admin(system, page):
 
 
     # 게시물 선택삭제하기 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 @app.route("/<system>/bulk_delete", methods=["POST"])
 def bulk_delete(system):
     ids_str = request.form.get("selected_ids", "")
@@ -345,12 +346,20 @@ def bulk_delete(system):
         pdf_path = os.path.join(pdf_folder, pdf_filename)
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
+            print(f"✅ 삭제됨: {pdf_filename}")
+        else:
+            print(f"❌ PDF 없음: {pdf_filename}")
         original_df.drop(index=idx, inplace=True)
 
     original_df.reset_index(drop=True, inplace=True)
     original_df.to_excel(data_path, index=False)
+
+    # ✅ 여기! PDF 남은 파일 확인
+    print("📁 현재 폴더 내 PDF:", os.listdir(pdf_folder))
+
     flash(f"{len(selected_indices)}건이 삭제되었습니다.")
     return redirect(url_for('admin', system=system, page=page))
+
 
     # 게시물 선택삭제 끝  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
