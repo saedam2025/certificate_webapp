@@ -536,15 +536,13 @@ a.btn.issue:hover {
           return;
         }
 
-        btn.innerHTML = `<span class="shaking">발급중</span>`;  // 흔들리는 텍스트
+        btn.innerHTML = `<span class="shaking">>>></span>`;  // 흔들리는 텍스트
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
     });
   });
 </script>
-
-
   <!-- 플래시 메시지 -->
   {% with messages = get_flashed_messages() %}
     {% if messages %}
