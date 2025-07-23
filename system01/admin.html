@@ -323,7 +323,8 @@ a.btn.issue:hover {
   <table>
     <thead>
       <tr>
-        <th style="width: 30px; height: 35px;"><input type="checkbox" onclick="toggleAll(this)"></th> <!-- 전체 선택 셀렉트 버튼 -->
+        <th style="width: 30px; height: 35px; display: flex; justify-content: center; align-items: center;>
+        <input type="checkbox" onclick="toggleAll(this)"></th> <!-- 전체 선택 셀렉트 버튼 -->
         <th style="width: 30px; height: 35px;">No</th>
         <th style="width: 70px;">신청일</th>
         <th style="width: 100px;">증명서종류</th>
@@ -346,7 +347,8 @@ a.btn.issue:hover {
       <form method="POST" action="/{{ system }}/update/{{ loop.index0 + (page - 1) * 10 }}">
       <input type="hidden" name="page" value="{{ page }}">
         <tr>
-          <td style="height: 35px;"><input type="checkbox" name="selected_rows" value="{{ loop.index0 + (page - 1) * 10 }}"></td>
+          <td style="height: 35px; display: flex; justify-content: center; align-items: center;">
+          <input type="checkbox" name="selected_rows" value="{{ loop.index0 + (page - 1) * 10 }}"></td>
           <td style="height: 35px;">{{ (total_count - ((page - 1) * 10 + loop.index0)) }}</td>
           {% if row.상태 == "대기" %}
             <td><input type="text" name="신청일" value="{{ row.신청일 }}" readonly></td>
@@ -413,38 +415,23 @@ a.btn.issue:hover {
   </table>
 
 
-<!-- ✅ 상단 summary bar -->
+<!-- ✅ 전체 summary bar -->
 <div class="summary-pagination" style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
 
-  <!-- ✅ 왼쪽: 선택삭제 + 카운터 -->
-  <div style="display: flex; align-items: center; gap: 14px;">
+  <!-- ✅ 왼쪽: 선택삭제 버튼 + 카운터 박스 수평 나란히 -->
+  <div style="display: flex; align-items: center; gap: 10px;">
 
     <!-- 선택삭제 버튼 -->
     <form method="POST" action="/{{ system }}/bulk_delete" 
           onsubmit="return confirm('발급된 pdf파일도 삭제됩니다. 정말 선택한 항목을 삭제하시겠습니까? ')" 
-          style="margin: 0; display: flex; align-items: center;">
+          style="margin: 0;">
       <input type="hidden" name="page" value="{{ page }}">
       <input type="hidden" name="selected_ids" id="selected_ids_input">
-      <button type="submit" class="btn btn-delete" style="
-        padding: 6px 14px;
-        height: 34px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">선택삭제</button>
+      <button type="submit" class="btn btn-delete">선택삭제</button>
     </form>
 
-    <!-- 카운터 박스 -->
-    <div class="summary" style="
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      height: 34px;
-      line-height: 1.2;
-    ">
+    <!-- 카운터 텍스트 + 로그아웃 (테두리 유지) -->
+    <div class="summary" style="border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; font-size: 14px;">
       총 신청 {{ total_count }}건 /
       발급완료 {{ issued_count }}건 /
       발급대기 {{ pending_count }}건  
@@ -491,6 +478,7 @@ a.btn.issue:hover {
     {% endif %}
   </div>
 </div>
+
 
 
 </div>
