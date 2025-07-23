@@ -495,6 +495,21 @@ a.btn.issue:hover {
   });
 </script>
 
+<style>
+@keyframes slideText {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(10px); }
+  100% { transform: translateX(0); }
+}
+
+.moving-text {
+  display: inline-block;
+  font-weight: bold;
+  animation: slideText 1s infinite;
+  color: #333;
+}
+</style>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const generateButtons = document.querySelectorAll(".generate-btn");
@@ -507,7 +522,7 @@ a.btn.issue:hover {
           return;
         }
 
-        btn.textContent = "..ing";     // 버튼 텍스트 변경
+        btn.textContent = "<h3 class="moving-text">>></h3>";     // 버튼 텍스트 변경
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
