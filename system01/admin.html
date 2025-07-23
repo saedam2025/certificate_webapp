@@ -81,6 +81,12 @@ a.btn, button.btn {
   cursor: pointer;
   display: inline-block;
   transition: all 0.3s ease;
+
+  min-width: 70px;   /* ✅ 너비 고정 */
+  height: 40px;       /* ✅ 높이 고정 */
+  line-height: 24px;  /* ✅ 텍스트 정렬 보정 */
+  text-align: center;
+  box-sizing: border-box;
 }
 
 /* 삭제 버튼 - hover 시 빨간 계열 */
@@ -113,6 +119,8 @@ a.btn.issue:hover {
   border-color: #4a90e2;
 }
 
+
+/* 인풋버튼 스타일 지정 */
     input, select, textarea {
       border: none;
       background: transparent;
@@ -507,7 +515,7 @@ a.btn.issue:hover {
           e.preventDefault();
           return;
         }
-        btn.innerHTML = `<span class="spinning"><img src="https://www.saedam.org/img_sub/loading.gif" style="width: 15px;"></span>`;
+        btn.innerHTML = `<img src="https://www.saedam.org/img_sub/loading.gif" style="width: 15px;">`;
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
