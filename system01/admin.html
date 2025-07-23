@@ -422,9 +422,9 @@ a.btn.issue:hover {
 </a>
   </div>
 
- <div class="summary">
+ <div style="text-align: left; margin-left: 20px;">
   <!-- ✅ 삭제 버튼 추가 -->
-  <form method="POST" action="/{{ system }}/bulk_delete" onsubmit="return confirm('정말 선택한 항목을 삭제하시겠습니까?')">
+  <form method="POST" action="/{{ system }}/bulk_delete" onsubmit="return confirm('발급된 pdf파일도 삭제됩니다. 정말 선택한 항목을 삭제하시겠습니까? ')">
     <input type="hidden" name="page" value="{{ page }}">
     <input type="hidden" name="selected_ids" id="selected_ids_input">
     <button type="submit" class="btn btn-delete" style="margin-left: 10px;">선택삭제</button>
