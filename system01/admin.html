@@ -495,35 +495,7 @@ a.btn.issue:hover {
   });
 </script>
 
-  <!-- 모래시계 돌게하기 -->
-<style>
-@keyframes slideText {
-  0%   { transform: translateX(0); }
-  50%  { transform: translateX(10px); }
-  100% { transform: translateX(0); }
-}
-
-.moving-text {
-  display: inline-block;
-  font-weight: bold;
-  animation: slideText 1s infinite;
-  color: #333;
-}
-</style>
-
-<style>
-  @keyframes spinEmoji {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .spinning {
-    animation: spinEmoji 1s linear infinite;
-    display: inline-block;
-  }
-</style>
-
-  <!-- 발급버튼 여러번 누르기 방지 -->
+    <!-- 발급버튼 여러번 누르기 방지 -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const generateButtons = document.querySelectorAll(".generate-btn");
@@ -537,7 +509,7 @@ a.btn.issue:hover {
         }
 
         // 회전하는 이모지 적용
-        btn.innerHTML = `<span class="spinning">⏳</span>`;
+        btn.innerHTML = `<span class="spinning"><img src="https://www.saedam.org/img_sub/loading.gif" style="width: 40px;"></span>`;
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
