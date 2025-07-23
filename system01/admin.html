@@ -494,7 +494,6 @@ a.btn.issue:hover {
     });
   });
 </script>
-
 <style>
 @keyframes slideText {
   0%   { transform: translateX(0); }
@@ -510,6 +509,21 @@ a.btn.issue:hover {
 }
 </style>
 
+<style>
+  @keyframes shakeText {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-4px); }
+    50%  { transform: translateX(4px); }
+    75%  { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+  }
+
+  .shaking {
+    animation: shakeText 0.5s infinite;
+    display: inline-block;
+  }
+</style>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const generateButtons = document.querySelectorAll(".generate-btn");
@@ -522,13 +536,14 @@ a.btn.issue:hover {
           return;
         }
 
-        btn.textContent = "<h3 class="moving-text">>></h3>";     // 버튼 텍스트 변경
+        btn.innerHTML = `<span class="shaking">발급중</span>`;  // 흔들리는 텍스트
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
     });
   });
 </script>
+
 
   <!-- 플래시 메시지 -->
   {% with messages = get_flashed_messages() %}
