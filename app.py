@@ -382,6 +382,23 @@ def delete_submission(system, idx):
     flash("삭제가 완료되었습니다.")
     return redirect(url_for("admin", system=system))
 
+# ✅  메일주소 수정
+@app.route('/<system>/update_email', methods=['POST'])
+def update_email(system):
+    index = int(request.form['index'])
+    page = int(request.form.get('page', 1))
+    new_email = request.form['이메일주소']
+
+    data_path = f"pending_submissions_{system[-2:]}.xlsx"
+    df = pd.read_excel(data_path)
+    if 0 <= index < len(df):
+        df.at[index, '이메일주소'] = new_email
+        df.to_excel(data_path, index=False)
+
+    flash("메일주소가 수정되었습니다.")
+    return redirect(url_for('admin_page', system=system, page=page))
+    # admin_page 함수명에 맞게 수정!
+
 
 # ✅  PDF 생성
 @app.route("/<system>/pdf/<filename>")
