@@ -333,19 +333,22 @@ def bulk_delete(system):
     data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     pdf_folder = f"/mnt/data/output_pdfs{system[-2:]}"
     
-    df = pd.read_excel(data_path)
+    original_df = pd.read_excel(data_path)
+    total_len = len(original_df)
 
-    for idx in sorted(selected_indices, reverse=True):
-        if idx < len(df):
-            row = df.iloc[idx]
-            pdf_filename = f"{row['발급번호']}_{row['성명']}_{row['증명서종류'].replace(' ', '')}.pdf"
-            pdf_path = os.path.join(pdf_folder, pdf_filename)
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
-            df.drop(index=idx, inplace=True)
+    # ✅ 사용자 눈에 보이는 idx → 실제 역순 인덱스로 변환
+    original_indices = [total_len - 1 - i for i in selected_indices]
 
-    df.reset_index(drop=True, inplace=True)
-    df.to_excel(data_path, index=False)
+    for idx in sorted(original_indices, reverse=True):  # 역순으로 삭제
+        row = original_df.iloc[idx]
+        pdf_filename = f"{row['발급번호']}_{row['성명']}_{row['증명서종류'].replace(' ', '')}.pdf"
+        pdf_path = os.path.join(pdf_folder, pdf_filename)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        original_df.drop(index=idx, inplace=True)
+
+    original_df.reset_index(drop=True, inplace=True)
+    original_df.to_excel(data_path, index=False)
     flash(f"{len(selected_indices)}건이 삭제되었습니다.")
     return redirect(url_for('admin', system=system, page=page))
 
