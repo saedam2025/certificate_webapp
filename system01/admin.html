@@ -587,7 +587,7 @@ document.addEventListener("DOMContentLoaded", function () {
   <h3>이메일 수정</h3>
   <form id="emailForm" method="POST">
     <input type="email" name="이메일주소" id="modalEmail" style="width:100%; padding:8px; font-size:14px;" required>
-    <input type="hidden" name="index" id="modalIndex">
+    <input type="hidden" name="index" value="{{ df.index[loop.index0 + (page - 1) * 10] }}">
     <input type="hidden" name="page" value="{{ page }}">
     <br><br>
     <button type="submit">저장</button>
