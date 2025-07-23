@@ -413,11 +413,11 @@ a.btn.issue:hover {
   </table>
 
 
-<!-- ✅ 전체 summary bar -->
-<div class="summary-pagination" style="display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0;">
+<!-- ✅ summary bar -->
+<div class="summary-pagination" style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
 
-  <!-- ✅ 왼쪽: 선택삭제 버튼 + 카운터 박스 수평 나란히 -->
-  <div style="display: flex; align-items: center; gap: 10px;">
+  <!-- ✅ 왼쪽 영역 (버튼 + 카운터) -->
+  <div style="display: flex; align-items: center; gap: 12px;">
 
     <!-- 선택삭제 버튼 -->
     <form method="POST" action="/{{ system }}/bulk_delete" 
@@ -425,20 +425,33 @@ a.btn.issue:hover {
           style="margin: 0;">
       <input type="hidden" name="page" value="{{ page }}">
       <input type="hidden" name="selected_ids" id="selected_ids_input">
-      <button type="submit" class="btn btn-delete">선택삭제</button>
+      <button type="submit" class="btn btn-delete" style="
+        height: 38px;
+        display: flex;
+        align-items: center;
+        padding: 6px 14px;
+      ">선택삭제</button>
     </form>
 
-    <!-- 카운터 텍스트 + 로그아웃 (테두리 유지) -->
-    <div class="summary" style="border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; font-size: 14px;">
+    <!-- 카운터 박스 -->
+    <div class="summary" style="
+      height: 38px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 0 14px;
+      font-size: 14px;
+    ">
       총 신청 {{ total_count }}건 /
       발급완료 {{ issued_count }}건 /
       발급대기 {{ pending_count }}건  
       <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 10px;">
-        <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
+        <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px;">
       </a>
     </div>
-
   </div>
+
 
   <!-- ✅ 오른쪽: 페이지네비게이션 -->
   <div class="pagination">
