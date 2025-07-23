@@ -412,27 +412,25 @@ a.btn.issue:hover {
     </tbody>
   </table>
 
-<div class="summary-pagination" style="display: flex; align-items: center; justify-content: space-between;">
-
-  <!-- ✅ 왼쪽: 카운터 + 로그아웃 -->
-  <div class="summary" style="display: flex; align-items: center;">
+<div class="summary-pagination">
+  <div class="summary">
     총 신청 {{ total_count }}건 /
     발급완료 {{ issued_count }}건 /
-    발급대기 {{ pending_count }}건
+    발급대기 {{ pending_count }}건  
+<a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 20px;">
+  <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
+</a>
 
-    <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 20px;">
-      <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
-    </a>
-  </div>
-
-  <!-- ✅ 오른쪽: 선택삭제 버튼 -->
-  <form method="POST" action="/{{ system }}/bulk_delete" onsubmit="return confirm('정말 선택한 항목을 삭제하시겠습니까?')" style="margin-left: 20px;">
+<div>
+  <!-- ✅ 삭제 버튼 추가 -->
+  <form method="POST" action="/{{ system }}/bulk_delete" onsubmit="return confirm('정말 선택한 항목을 삭제하시겠습니까?')">
     <input type="hidden" name="page" value="{{ page }}">
     <input type="hidden" name="selected_ids" id="selected_ids_input">
-    <button type="submit" class="btn btn-delete">선택삭제</button>
+    <button type="submit" class="btn btn-delete" style="margin-left: 10px;">선택삭제</button>
   </form>
-
 </div>
+
+  </div>
 
 <!-- ✅ 개선된 페이지네이션 -->
 <div class="pagination">
