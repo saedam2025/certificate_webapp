@@ -383,24 +383,36 @@ def delete_submission(system, idx):
     flash("삭제가 완료되었습니다.")
     return redirect(url_for("admin", system=system))
 
+
+
 # ✅ 이메일 수정창 부분=============================
-@app.route('/<system>/update_email', methods=["POST"])
+@app.route("/<system>/update_email", methods=["POST"])
 def update_email(system):
     index = int(request.form.get("index"))
-    page = int(request.form.get("page", 1))
     new_email = request.form.get("이메일주소")
+    page = request.form.get("page", 1)
 
     file_path = f"pending_submissions_{system[-2:]}.xlsx"
+
+    if not os.path.exists(file_path):
+        flash("파일이 존재하지 않습니다.")
+        return redirect(url_for('admin_page', system=system, page=page))
+
+    # 최신순 정렬로 admin 페이지와 동일한 인덱스 맞춤
     df = pd.read_excel(file_path)
+    df = df.iloc[::-1].reset_index(drop=True)
 
     if 0 <= index < len(df):
         df.at[index, "이메일주소"] = new_email
+
+        # 저장 시 다시 원래 순서로 되돌려 저장
+        df = df.iloc[::-1].reset_index(drop=True)
         df.to_excel(file_path, index=False)
         flash("이메일이 수정되었습니다.")
     else:
         flash("⚠️ 유효하지 않은 인덱스입니다.")
 
-    return redirect(url_for("admin", system=system, page=page))
+    return redirect(url_for('admin_page', system=system, page=page))
 
 
 
