@@ -10,7 +10,7 @@
 body {
   font-family: 'Nanum Gothic', sans-serif;
   background-color: #000; /* 필요 시 제거 가능 */
-  background-image: url("/static/img/Kakao_friendsbg4k.png");
+  background-image: url("https://www.saedam.org/img_sub/Kakao_friendsbg4k.png");
   background-repeat: repeat;
   background-size: auto;
   background-position: center top;
@@ -18,7 +18,7 @@ body {
   padding: 0;
 }
     .container {
-      width: 1800px;   /* ✅ 메인 데이터 테이블 가로크기===================== */
+      width: 1700px;   /* ✅ 메인 데이터 테이블 가로크기===================== */
       margin: 20px auto;
       background: white;
       border-radius: 12px;
@@ -81,6 +81,12 @@ a.btn, button.btn {
   cursor: pointer;
   display: inline-block;
   transition: all 0.3s ease;
+
+  min-width: 56px;   /* ✅ 너비 고정 */
+  height: 34px;       /* ✅ 높이 고정 */
+
+  text-align: center;
+  box-sizing: border-box;
 }
 
 /* 삭제 버튼 - hover 시 빨간 계열 */
@@ -113,6 +119,8 @@ a.btn.issue:hover {
   border-color: #4a90e2;
 }
 
+
+/* 인풋버튼 스타일 지정 */
     input, select, textarea {
       border: none;
       background: transparent;
@@ -203,8 +211,6 @@ a.btn.issue:hover {
   transition: top 2s ease-in-out, left 2s ease-in-out;
 }
 
-
-
 #floatingAlert {
   max-height: 130px;
   object-fit: contain;
@@ -281,9 +287,9 @@ a.btn.issue:hover {
 {% endif %}
 
 <div id="cloudContainer">
-  <img src="/static/img/cloud01.png" class="floatingCloud" style="top: 40px; left: 15%;">
-  <img src="/static/img/cloud02.png" class="floatingCloud" style="top: 110px; left: 65%;">
-  <img src="/static/img/cloud03.png" class="floatingCloud" style="top: 20px; left: 90%;">
+  <img src="https://www.saedam.org/img_sub/cloud01.png" class="floatingCloud" style="top: 40px; left: 15%;">
+  <img src="https://www.saedam.org/img_sub/cloud02.png" class="floatingCloud" style="top: 110px; left: 65%;">
+  <img src="https://www.saedam.org/img_sub/cloud03.png" class="floatingCloud" style="top: 20px; left: 90%;">
 </div>
 
   <!-- 상단 캐릭터 이미지 및 제목 -->
@@ -317,6 +323,7 @@ a.btn.issue:hover {
   <table>
     <thead>
       <tr>
+        <th style="width: 30px; height: 35px;"><input type="checkbox" onclick="toggleAll(this)"></th> <!-- 전체 선택 셀렉트 버튼 -->
         <th style="width: 30px; height: 35px;">No</th>
         <th style="width: 70px;">신청일</th>
         <th style="width: 100px;">증명서종류</th>
@@ -328,10 +335,10 @@ a.btn.issue:hover {
         <th style="width: 100px;">장소</th>
         <th style="width: 80px;">근무시작일</th>
         <th style="width: 80px;">근무종료일</th>
-        <th style="width: 160px;">이메일</th>
+        <th style="width: 30px;">메일</th>
         <th style="width: 70px;">종료사유</th>
         <th style="width: 85px;">상태<br>(발급번호)</th>
-        <th style="width: 175px;">작업</th>
+        <th style="width: 165px;">작업</th>
       </tr>
     </thead>
     <tbody>
@@ -339,6 +346,7 @@ a.btn.issue:hover {
       <form method="POST" action="/{{ system }}/update/{{ loop.index0 + (page - 1) * 10 }}">
       <input type="hidden" name="page" value="{{ page }}">
         <tr>
+          <td style="height: 35px;"><input type="checkbox" name="selected_rows" value="{{ loop.index0 + (page - 1) * 10 }}"></td>
           <td style="height: 35px;">{{ (total_count - ((page - 1) * 10 + loop.index0)) }}</td>
           {% if row.상태 == "대기" %}
             <td><input type="text" name="신청일" value="{{ row.신청일 }}" readonly></td>
@@ -351,7 +359,14 @@ a.btn.issue:hover {
             <td><input type="text" name="근무장소" value="{{ row.근무장소 }}"></td>
             <td><input type="text" name="근무시작일" value="{{ row.근무시작일 }}"></td>
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
-            <td><input type="email" name="이메일주소" value="{{ row.이메일주소 }}"></td>
+<td>
+  <input type="hidden" name="이메일주소" value="{{ row.이메일주소 }}" id="email_{{ loop.index0 }}">
+<img src="https://www.saedam.org/img_sub/mail.png"
+     alt="메일"
+     title="{{ row.이메일주소 }}"
+     style="height: 15px; vertical-align: middle; cursor: pointer;"
+     onclick="openEmailModal({{ loop.index0 + (page - 1) * 10 }}, '{{ row.이메일주소 }}')">
+</td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
             <td>{{ row.신청일 }}</td>
@@ -364,7 +379,13 @@ a.btn.issue:hover {
             <td>{{ row.근무장소 }}</td>
             <td>{{ row.근무시작일 }}</td>
             <td>{{ row.근무종료일 }}</td>
-                 <td>{{ row.이메일주소 }}</td>
+                 <td><img src="https://www.saedam.org/img_sub/mail.png"
+     alt="메일"
+     title="{{ row.이메일주소 }}"
+     style="height: 15px; vertical-align: middle; cursor: pointer;"
+     onclick="copyEmailToClipboard(this)"
+     data-email="{{ row.이메일주소 }}">
+</td>
             <td>{{ row.종료사유 }}</td>
           {% endif %}
 <td>
@@ -397,8 +418,16 @@ a.btn.issue:hover {
     발급완료 {{ issued_count }}건 /
     발급대기 {{ pending_count }}건  
 <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 20px;">
-  <img src="/static/img/logout2.png" alt="로그아웃" title="로그아웃" style="height: 30px; vertical-align: middle;">
+  <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
 </a>
+
+  <!-- ✅ 삭제 버튼 추가 -->
+  <form method="POST" action="/{{ system }}/bulk_delete" onsubmit="return confirm('정말 선택한 항목을 삭제하시겠습니까?')">
+    <input type="hidden" name="page" value="{{ page }}">
+    <input type="hidden" name="selected_ids" id="selected_ids_input">
+    <button type="submit" class="btn btn-delete" style="margin-left: 10px;">선택삭제</button>
+  </form>
+
   </div>
 
 <!-- ✅ 개선된 페이지네이션 -->
@@ -465,18 +494,45 @@ a.btn.issue:hover {
     left: 50%;
     transform: translateX(-50%);
   ">
-    <img src="/static/img/logo.gif" alt="로고" style="height: 48px; width: auto;">
+    <img src="https://www.saedam.org/img_sub/logo.gif" alt="로고" style="height: 48px; width: auto;">
   </div>
 
   <!-- 카피라이트 문구 -->
 <div style="display: flex; justify-content: center; position: relative;">
-  <div style="transform: translateX(720px); text-align: left;">
+  <div style="transform: translateX(690px); text-align: left;">
     Instructor Career Certificate Issuance System<br>
     Copyright©(사)새담청소년교육문화원. All Rights Reserved.
   </div>
 </div>
 
+  <!--체크박스 전체 선택 기능  -->
+<script>
+function toggleAll(source) {
+  const checkboxes = document.querySelectorAll('input[name="selected_rows"]');
+  checkboxes.forEach(cb => cb.checked = source.checked);
+}
+</script>
 
+  <!--체크박스 선택된 행만 전송  -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form[action$="bulk_delete"]');
+  form.addEventListener('submit', function (e) {
+    const checked = document.querySelectorAll('input[name="selected_rows"]:checked');
+    if (checked.length === 0) {
+      alert('삭제할 항목을 선택하세요.');
+      e.preventDefault();
+      return;
+    }
+
+    // 선택된 값만 모아서 숨겨진 input에 삽입
+    const values = Array.from(checked).map(cb => cb.value).join(',');
+    document.getElementById('selected_ids_input').value = values;
+  });
+});
+</script>
+
+  <!-- 삭제확인 메시지  -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const deleteButtons = document.querySelectorAll(".btn-delete");
@@ -490,6 +546,7 @@ a.btn.issue:hover {
   });
 </script>
 
+    <!-- 발급버튼 여러번 누르기 방지 -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const generateButtons = document.querySelectorAll(".generate-btn");
@@ -501,8 +558,7 @@ a.btn.issue:hover {
           e.preventDefault();
           return;
         }
-
-        btn.textContent = "발급중";     // 버튼 텍스트 변경
+        btn.innerHTML = `<img src="https://www.saedam.org/img_sub/loading.gif" style="width: 14px;">`;
         btn.style.pointerEvents = "none";  // 추가 클릭 방지
         btn.dataset.processing = "true";   // 중복 방지 플래그
       });
@@ -529,7 +585,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 랜덤 이미지 설정
   const randomNum = Math.floor(Math.random() * 7) + 1;
-  alertImg.src = `/static/img/issue_alert0${randomNum}.png`;
+  alertImg.src = `https://www.saedam.org/img_sub/issue_alert0${randomNum}.png`;
 
   // ✅ 고정된 위치 기준에서 드래그 처리
   let isDragging = false;
@@ -572,6 +628,61 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   });
+</script>
+
+  <!-- 창뛰워 이메일 수정하기 -->
+
+<!-- 이메일 수정 모달창 -->
+<div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
+  <h3>이메일 수정</h3>
+  <form id="emailForm" method="POST">
+    <input type="email" name="이메일주소" id="modalEmail" style="width:100%; padding:8px; font-size:14px;" required>
+    <input type="hidden" name="index" id="modalIndex">
+    <input type="hidden" name="page" value="{{ page }}">
+    <br><br>
+    <button type="submit">저장</button>
+    <button type="button" onclick="closeEmailModal()">닫기</button>
+  </form>
+</div>
+
+  <!-- 창뛰워 이메일 수정하기  ----->
+<script>
+function openEmailModal(index, email) {
+  document.querySelector('#modalEmail').value = email;
+  document.querySelector('#modalIndex').value = index;
+  document.querySelector('#emailModal').style.display = 'block';
+
+  const system = location.pathname.split('/')[1];  // 예: system01
+  document.querySelector('#emailForm').action = `/${system}/update_email`;
+
+  setTimeout(() => {
+    document.querySelector('#modalEmail').focus();
+  }, 100);
+}
+</script>
+<script>
+  function closeEmailModal() {
+    document.getElementById("emailModal").style.display = "none";
+  }
+</script>
+  <!-- 창뛰워 이메일 수정하기 끝 -->
+
+  <!-- 이메일주소 클립보드 복사 -->
+<script>
+function copyEmailToClipboard(element) {
+    const email = element.getAttribute('data-email');
+    if (!email) return;
+
+    // 클립보드에 복사
+    navigator.clipboard.writeText(email)
+        .then(() => {
+            alert(`클립보드로 이메일 주소가 복사되었습니다:\n${email}`);
+        })
+        .catch(err => {
+            console.error('클립보드 복사 실패:', err);
+            alert('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
+        });
+}
 </script>
 
 <br><br><br><br>
