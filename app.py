@@ -396,22 +396,28 @@ def update_email(system):
         page = int(page)
     except ValueError:
         flash("유효하지 않은 인덱스입니다.")
-        return redirect(url_for("admin", system=system, page=page))  # ✅ 함수명에 맞춰야 함
+        return redirect(url_for("admin", system=system, page=page))
 
     data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    df = pd.read_excel(data_path)
-    df.reset_index(drop=True, inplace=True)  # ✅ 인덱스 초기화
 
+    # 1. 엑셀 파일을 역순으로 로드하고 인덱스 재정렬
+    df = pd.read_excel(data_path)
+    df = df.iloc[::-1].reset_index(drop=True)
+
+    # 2. 유효한 인덱스인지 확인
     if index < 0 or index >= len(df):
         flash("유효하지 않은 인덱스입니다.")
         return redirect(url_for("admin", system=system, page=page))
 
+    # 3. 이메일 주소 수정
     df.at[index, "이메일주소"] = new_email
-    df.to_excel(data_path, index=False)
+
+    # 4. 다시 역순으로 저장
+    final_df = df.iloc[::-1].reset_index(drop=True)
+    final_df.to_excel(data_path, index=False)
 
     flash("이메일이 성공적으로 수정되었습니다.")
-    return redirect(url_for("admin", system=system, page=page))  # ✅ 여기도 동일하게
-
+    return redirect(url_for("admin", system=system, page=page))
 
 
 
