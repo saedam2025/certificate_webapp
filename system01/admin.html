@@ -413,6 +413,17 @@ a.btn.issue:hover {
     </tbody>
   </table>
 
+  <div style="display: flex; align-items: center;">
+
+    <!-- 선택삭제 버튼 -->
+    <form method="POST" action="/{{ system }}/bulk_delete" 
+          onsubmit="return confirm('발급된 pdf파일도 삭제됩니다. 정말 선택한 항목을 삭제하시겠습니까? ')" 
+          style="margin-right: 10px;">
+      <input type="hidden" name="page" value="{{ page }}">
+      <input type="hidden" name="selected_ids" id="selected_ids_input">
+      <button type="submit" class="btn btn-delete">선택삭제</button>
+    </form>
+</div>
 
 <!-- ✅ 선택삭제 + 카운터 + 페이지네비게이션: 한 줄에 좌우 정렬 -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
