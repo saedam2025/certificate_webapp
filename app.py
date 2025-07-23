@@ -389,13 +389,12 @@ def update_email(system):
     new_email = request.form.get("이메일주소")
     page = request.form.get("page", 1)
 
-    # 엑셀 경로
     data_path = f"pending_submissions_{system[-2:]}.xlsx"
     df = pd.read_excel(data_path)
 
-    # 값 수정
+    # ✅ 실제 위치(index 번째 행) 접근 시 iloc 사용
     if 0 <= index < len(df):
-        df.at[index, "이메일주소"] = new_email
+        df.iloc[index, df.columns.get_loc("이메일주소")] = new_email
         df.to_excel(data_path, index=False)
         flash("이메일이 성공적으로 수정되었습니다.")
     else:
