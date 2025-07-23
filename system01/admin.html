@@ -412,53 +412,40 @@ a.btn.issue:hover {
     </tbody>
   </table>
 
-
-<!-- ✅ summary bar -->
-<div class="summary-pagination" style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
-
-  <!-- ✅ 왼쪽 영역 (버튼 + 카운터) -->
-  <div style="display: flex; align-items: center; gap: 12px;">
+<!-- ✅ 선택삭제 버튼 + 카운터글씨 (왼쪽 정렬) -->
+<div style="margin-top: 10px;">
+  <div style="display: inline-block; vertical-align: top;">
 
     <!-- 선택삭제 버튼 -->
-<table>
-<tr><td>
     <form method="POST" action="/{{ system }}/bulk_delete" 
           onsubmit="return confirm('발급된 pdf파일도 삭제됩니다. 정말 선택한 항목을 삭제하시겠습니까? ')" 
-          style="margin: 0;">
+          style="display: inline-block; margin: 0; margin-right: 10px;">
       <input type="hidden" name="page" value="{{ page }}">
       <input type="hidden" name="selected_ids" id="selected_ids_input">
-      <button type="submit" class="btn btn-delete" style="
-        height: 38px;
-        display: flex;
-        align-items: center;
-        padding: 6px 14px;
-      ">선택삭제</button>
+      <button type="submit" class="btn btn-delete">선택삭제</button>
     </form>
-</td>
-<td>
+
     <!-- 카운터 박스 -->
     <div class="summary" style="
-      height: 38px;
-      display: flex;
-      align-items: center;
+      display: inline-block;
+      vertical-align: top;
       border: 1px solid #ccc;
       border-radius: 6px;
-      padding: 0 14px;
+      padding: 6px 12px;
       font-size: 14px;
     ">
       총 신청 {{ total_count }}건 /
       발급완료 {{ issued_count }}건 /
       발급대기 {{ pending_count }}건  
       <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 10px;">
-        <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px;">
+        <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
       </a>
     </div>
   </div>
-</td>
+</div>
 
-<td>
-
-  <!-- ✅ 오른쪽: 페이지네비게이션 -->
+<!-- ✅ 페이지네비게이션 (오른쪽 정렬) -->
+<div style="text-align: right; margin-top: -38px;">
   <div class="pagination">
     {% if page > 1 %}
       <a href="/{{ system }}/admin/{{ page - 1 }}">« Prev</a>
@@ -498,9 +485,7 @@ a.btn.issue:hover {
 
 
 </div>
-</td>
-</tr>
-</table>
+
 
 <!-- 하단 영역 (로고 + 저작권 문구 수평 정렬) -->
 <div style="
