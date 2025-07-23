@@ -396,7 +396,7 @@ def update_email(system):
 
     if not os.path.exists(file_path):
         flash("파일이 존재하지 않습니다.")
-        return redirect(url_for('admin_page', system=system, page=page))
+        return redirect(url_for('admin', system=system, page=page))
 
     # 최신순 정렬로 admin 페이지와 동일한 인덱스 맞춤
     df = pd.read_excel(file_path)
@@ -412,8 +412,7 @@ def update_email(system):
     else:
         flash("⚠️ 유효하지 않은 인덱스입니다.")
 
-    return redirect(url_for('admin_page', system=system, page=page))
-
+    return redirect(url_for('admin', system=system, page=page))
 
 
 # ✅  PDF 생성
