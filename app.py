@@ -384,24 +384,24 @@ def delete_submission(system, idx):
     return redirect(url_for("admin", system=system))
 
 # ✅ 이메일 수정창 부분=============================
-@app.route('/<system>/update_email', methods=['POST'])
+@app.route('/<system>/update_email', methods=["POST"])
 def update_email(system):
     index = int(request.form.get("index"))
+    page = int(request.form.get("page", 1))
     new_email = request.form.get("이메일주소")
-    page = request.form.get("page", 1)
 
-    data_path = f"pending_submissions_{system[-2:]}.xlsx"
-    df = pd.read_excel(data_path)
+    file_path = f"pending_submissions_{system[-2:]}.xlsx"
+    df = pd.read_excel(file_path)
 
-    # ✅ 실제 위치(index 번째 행) 접근 시 iloc 사용
     if 0 <= index < len(df):
-        df.iloc[index, df.columns.get_loc("이메일주소")] = new_email
-        df.to_excel(data_path, index=False)
-        flash("이메일이 성공적으로 수정되었습니다.")
+        df.at[index, "이메일주소"] = new_email
+        df.to_excel(file_path, index=False)
+        flash("이메일이 수정되었습니다.")
     else:
-        flash("유효하지 않은 인덱스입니다.")
+        flash("⚠️ 유효하지 않은 인덱스입니다.")
 
-    return redirect(url_for('admin', system=system, page=page))
+    return redirect(url_for("admin", system=system, page=page))
+
 
 
 # ✅  PDF 생성
