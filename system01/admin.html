@@ -584,7 +584,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <!-- 이메일 수정 모달창 -->
 <div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
   <h3>이메일 수정</h3>
-  <form method="POST" action="/{{ system }}/update/{{ loop.index0 + (page - 1) * 10 }}">
+  <form id="emailForm" method="POST">
     <input type="email" name="이메일주소" id="modalEmail" style="width:100%; padding:8px; font-size:14px;" required>
     <input type="hidden" name="index" id="modalIndex">
     <input type="hidden" name="page" value="{{ page }}">
@@ -601,7 +601,11 @@ function openEmailModal(index) {
   document.querySelector('#modalIndex').value = index;
   document.querySelector('#emailModal').style.display = 'block';
 
-  // 이메일 입력창 포커스
+  // ✅ action 경로를 동적으로 지정 (현재 주소에서 system 추출)
+  const pathParts = window.location.pathname.split('/');
+  const system = pathParts[1];  // e.g., system01
+  document.querySelector('#emailForm').action = `/${system}/update_email`;
+
   setTimeout(() => {
     document.querySelector('#modalEmail').focus();
   }, 100);
