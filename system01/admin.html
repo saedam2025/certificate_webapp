@@ -349,8 +349,17 @@ a.btn.issue:hover {
             <td><input type="text" name="근무장소" value="{{ row.근무장소 }}"></td>
             <td><input type="text" name="근무시작일" value="{{ row.근무시작일 }}"></td>
             <td><input type="text" name="근무종료일" value="{{ row.근무종료일 }}"></td>
-            <td>
-<img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 15px; vertical-align: middle;" onclick="editEmail(this)" data-email="example@domain.com" style="cursor:pointer; width:20px;">
+<td>
+  <!-- 숨은 input 필드 -->
+  <input type="text" name="이메일주소" class="email-input" value="{{ row.이메일주소 }}" style="display: none;">
+
+  <!-- 현재 이메일 텍스트 출력 -->
+  <span class="email-text">{{ row.이메일주소 }}</span>
+
+  <!-- 메일 아이콘 (클릭 시 편집) -->
+  <img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="메일주소 수정"
+       style="height: 15px; vertical-align: middle; cursor: pointer;"
+       onclick="editEmail(this)">
 </td>
             <td><input type="text" name="종료사유" value="{{ row.종료사유 }}"></td>
           {% else %}
@@ -584,22 +593,26 @@ document.addEventListener("DOMContentLoaded", function () {
   </div>
 </div>
 
-<script>
-  let currentEmailElement = null;
+<script>// 이메일 수정
+  let currentInput = null;
+  let currentText = null;
 
-  function editEmail(span) {
-    currentEmailElement = span;
-    const email = span.dataset.email;
-    document.getElementById('emailInput').value = email;
-    document.getElementById('emailModal').style.display = 'block';
+  function editEmail(icon) {
+    const td = icon.closest('td');
+    currentInput = td.querySelector('.email-input');
+    currentText = td.querySelector('.email-text');
+
+    if (currentInput && currentText) {
+      document.getElementById('emailInput').value = currentInput.value;
+      document.getElementById('emailModal').style.display = 'block';
+    }
   }
 
   function saveEmail() {
-    const newEmail = document.getElementById('emailInput').value;
-    if (currentEmailElement) {
-      currentEmailElement.dataset.email = newEmail;
-      alert("새 이메일 주소: " + newEmail);
-      // 여기에 서버 전송 로직 (AJAX 등) 추가 가능
+    const newEmail = document.getElementById('emailInput').value.trim();
+    if (currentInput && currentText) {
+      currentInput.value = newEmail;  // 🔁 숨겨진 input 값 수정
+      currentText.textContent = newEmail;  // 📝 화면 텍스트 수정
     }
     closeModal();
   }
@@ -608,6 +621,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('emailModal').style.display = 'none';
   }
 </script>
+
 
 
 <br><br><br><br>
