@@ -377,7 +377,13 @@ a.btn.issue:hover {
             <td>{{ row.근무장소 }}</td>
             <td>{{ row.근무시작일 }}</td>
             <td>{{ row.근무종료일 }}</td>
-                 <td><img src="https://www.saedam.org/img_sub/mail.png" alt="메일" title="{{ row.이메일주소 }}" style="height: 15px; vertical-align: middle;"></td>
+                 <td><img src="https://www.saedam.org/img_sub/mail.png"
+     alt="메일"
+     title="{{ row.이메일주소 }}"
+     style="height: 15px; vertical-align: middle; cursor: pointer;"
+     onclick="copyEmailToClipboard(this)"
+     data-email="{{ row.이메일주소 }}">
+</td>
             <td>{{ row.종료사유 }}</td>
           {% endif %}
 <td>
@@ -623,6 +629,24 @@ function openEmailModal(index, email) {
   }
 </script>
   <!-- 창뛰워 이메일 수정하기 끝 -->
+
+  <!-- 이메일주소 클립보드 복사 -->
+<script>
+function copyEmailToClipboard(element) {
+    const email = element.getAttribute('data-email');
+    if (!email) return;
+
+    // 클립보드에 복사
+    navigator.clipboard.writeText(email)
+        .then(() => {
+            alert(`이메일 주소가 복사되었습니다:\n${email}`);
+        })
+        .catch(err => {
+            console.error('클립보드 복사 실패:', err);
+            alert('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
+        });
+}
+</script>
 
 <br><br><br><br>
 </body>
