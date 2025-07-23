@@ -605,13 +605,20 @@ function closeEmailModal() {
 function saveEmail() {
   const index = document.querySelector('#modalIndex').value;
   const newEmail = document.querySelector('#modalEmail').value;
+
+  // 이메일 input 값을 변경
   const emailInput = document.querySelector(`#email_${index}`);
   emailInput.value = newEmail;
 
-  // 그 행의 form을 찾아서 submit (폼은 td의 상위 요소)
+  // ✅ 그 행의 "수정" 버튼 클릭 유도
   const form = emailInput.closest('form');
-  form.submit();
+  const saveButton = form.querySelector('button.save');
+  saveButton.click();
+
+  // 모달 닫기
+  closeEmailModal();
 }
+
 </script>
   <!-- 창뛰워 이메일 수정하기 끝 -->
 
