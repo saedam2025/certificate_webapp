@@ -292,6 +292,37 @@ def admin(system, page):
 
     # 패스워드 걸기 끝===================
 
+    # 게시물 선택삭제하기 ===================
+@app.route("/<system>/bulk_delete", methods=["POST"])
+def bulk_delete(system):
+    ids_str = request.form.get("selected_ids", "")
+    page = request.form.get("page", "1")
+
+    if not ids_str:
+        flash("삭제할 항목이 선택되지 않았습니다.")
+        return redirect(url_for('admin', system=system, page=page))
+
+    selected_indices = [int(i) for i in ids_str.split(',') if i.isdigit()]
+    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    pdf_folder = f"/mnt/data/output_pdfs{system[-2:]}"
+    
+    df = pd.read_excel(data_path)
+
+    for idx in sorted(selected_indices, reverse=True):
+        if idx < len(df):
+            row = df.iloc[idx]
+            pdf_filename = f"{row['발급번호']}_{row['성명']}_{row['증명서종류'].replace(' ', '')}.pdf"
+            pdf_path = os.path.join(pdf_folder, pdf_filename)
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+            df.drop(index=idx, inplace=True)
+
+    df.reset_index(drop=True, inplace=True)
+    df.to_excel(data_path, index=False)
+    flash(f"{len(selected_indices)}건이 삭제되었습니다.")
+    return redirect(url_for('admin', system=system, page=page))
+    # 게시물 선택삭제 끝===================
+
     data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
