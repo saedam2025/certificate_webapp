@@ -136,7 +136,8 @@ a.btn.issue:hover {
 
     .pagination {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 15px;
+      margin-right: 0px;
     }
 
     .pagination a, .pagination span {
@@ -302,7 +303,7 @@ a.btn.issue:hover {
   <!-- 텍스트 오버레이 -->
   <h1 style="
     position: absolute;
-    top: -68px;  /* ← 이미지 위에서 아래로 얼마나 떨어질지 */
+    top: -66px;  /* ← 이미지 위에서 아래로 얼마나 떨어질지 */
     left: 50%;
     transform: translateX(-50%);
     font-size: 32px;
@@ -412,66 +413,83 @@ a.btn.issue:hover {
     </tbody>
   </table>
 
-<div class="summary-pagination">
-  <div class="summary">
-    총 신청 {{ total_count }}건 /
-    발급완료 {{ issued_count }}건 /
-    발급대기 {{ pending_count }}건  
-<a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 20px;">
-  <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
-</a>
 
-  <!-- ✅ 삭제 버튼 추가 -->
-  <form method="POST" action="/{{ system }}/bulk_delete" onsubmit="return confirm('정말 선택한 항목을 삭제하시겠습니까?')">
-    <input type="hidden" name="page" value="{{ page }}">
-    <input type="hidden" name="selected_ids" id="selected_ids_input">
-    <button type="submit" class="btn btn-delete" style="margin-left: 10px;">선택삭제</button>
-  </form>
+<!-- ✅ 선택삭제 + 카운터 + 페이지네비게이션: 한 줄에 좌우 정렬 -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+
+  <!-- ✅ 왼쪽: 선택삭제 버튼 + 카운터 -->
+  <div style="display: flex; align-items: center;">
+
+    <!-- 선택삭제 버튼 -->
+    <form method="POST" action="/{{ system }}/bulk_delete" 
+          onsubmit="return confirm('발급된 pdf파일도 삭제됩니다. 정말 선택한 항목을 삭제하시겠습니까? ')" 
+          style="margin-right: 10px;">
+      <input type="hidden" name="page" value="{{ page }}">
+      <input type="hidden" name="selected_ids" id="selected_ids_input">
+      <button type="submit" class="btn btn-delete">선택삭제</button>
+  
+
+    <!-- 카운터 박스 -->
+    <div class="summary" style="
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      text-align: left;
+    ">
+      총 신청 {{ total_count }}건 /
+      발급완료 {{ issued_count }}건 /
+      발급대기 {{ pending_count }}건  
+      <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 10px;">
+        <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
+      </a>
+    </div>
 
   </div>
 
-<!-- ✅ 개선된 페이지네이션 -->
-<div class="pagination">
-  {% if page > 1 %}
-    <a href="/{{ system }}/admin/{{ page - 1 }}">« Prev</a>
-  {% endif %}
-
-  {% set start_page = page - 2 %}
-  {% set end_page = page + 2 %}
-
-  {# 시작 페이지 조정: 1보다 작으면 보정 #}
-  {% if start_page < 1 %}
-    {% set end_page = end_page + (1 - start_page) %}
-    {% set start_page = 1 %}
-  {% endif %}
-
-  {# 끝 페이지 조정: total_pages보다 크면 보정 #}
-  {% if end_page > total_pages %}
-    {% set start_page = start_page - (end_page - total_pages) %}
-    {% set end_page = total_pages %}
-  {% endif %}
-
-  {# 다시 한 번 시작 페이지 1보다 작아졌을 경우 보정 #}
-  {% if start_page < 1 %}
-    {% set start_page = 1 %}
-  {% endif %}
-
-  {# 페이지 출력 루프 (최대 5개 보장) #}
-  {% for p in range(start_page, end_page + 1) %}
-    {% if p == page %}
-      <span class="current-page">{{ p }}</span>
-    {% else %}
-      <a href="/{{ system }}/admin/{{ p }}">{{ p }}</a>
+  <!-- ✅ 오른쪽: 페이지네비게이션 -->
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="/{{ system }}/admin/{{ page - 1 }}">« Prev</a>
     {% endif %}
-  {% endfor %}
 
-  {% if page < total_pages %}
-    <a href="/{{ system }}/admin/{{ page + 1 }}">Next »</a>
-  {% endif %}
+    {% set start_page = page - 2 %}
+    {% set end_page = page + 2 %}
+
+    {% if start_page < 1 %}
+      {% set end_page = end_page + (1 - start_page) %}
+      {% set start_page = 1 %}
+    {% endif %}
+
+    {% if end_page > total_pages %}
+      {% set start_page = start_page - (end_page - total_pages) %}
+      {% set end_page = total_pages %}
+    {% endif %}
+
+    {% if start_page < 1 %}
+      {% set start_page = 1 %}
+    {% endif %}
+
+    {% for p in range(start_page, end_page + 1) %}
+      {% if p == page %}
+        <span class="current-page">{{ p }}</span>
+      {% else %}
+        <a href="/{{ system }}/admin/{{ p }}">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+      <a href="/{{ system }}/admin/{{ page + 1 }}">Next »</a>
+    {% endif %}
+  </div>
+
+</div>
 </div>
 
-</div></div>
 
+</div>
+
+</form><!---선택삭제 버튼의 form마무리 테그이지만 버튼과 카운터 텍스트 수평이 어긋나는 문제로 여기로 뺌>
 
 <!-- 하단 영역 (로고 + 저작권 문구 수평 정렬) -->
 <div style="
@@ -479,7 +497,7 @@ a.btn.issue:hover {
   justify-content: center;    /* 전체 기준: 가운데 정렬 */
   align-items: center;        /* 수직 정렬 맞춤 */
   width: 100%;
-  padding: 20px 40px;
+  padding: 5px 40px;
   box-sizing: border-box;
   font-size: 13px;
   color: #555;
@@ -499,8 +517,8 @@ a.btn.issue:hover {
 
   <!-- 카피라이트 문구 -->
 <div style="display: flex; justify-content: center; position: relative;">
-  <div style="transform: translateX(690px); text-align: left;">
-    Instructor Career Certificate Issuance System<br>
+  <div style="transform: translateX(680px); text-align: left;">
+    Instructor Career Certificate Issuance System. ©2025 Dev<br>
     Copyright©(사)새담청소년교육문화원. All Rights Reserved.
   </div>
 </div>
