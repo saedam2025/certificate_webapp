@@ -581,13 +581,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   <!-- 창뛰워 이메일 수정하기 -->
 
+<!-- 이메일 수정 모달창 -->
 <div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
   <h3>이메일 수정</h3>
-  <input type="email" id="modalEmail" style="width:100%; padding:8px; font-size:14px;">
-  <input type="hidden" id="modalIndex">
-  <br><br>
-  <button onclick="saveEmail()">저장</button>
-  <button onclick="closeEmailModal()">닫기</button>
+  <form method="POST" action="/{{ system }}/update_email">
+    <input type="email" name="이메일주소" id="modalEmail" style="width:100%; padding:8px; font-size:14px;" required>
+    <input type="hidden" name="index" id="modalIndex">
+    <input type="hidden" name="page" value="{{ page }}">
+    <br><br>
+    <button type="submit">저장</button>
+    <button type="button" onclick="closeEmailModal()">닫기</button>
+  </form>
 </div>
 
 <script>
@@ -597,7 +601,7 @@ function openEmailModal(index) {
   document.querySelector('#modalIndex').value = index;
   document.querySelector('#emailModal').style.display = 'block';
 
-  // 이메일 입력창 자동 포커스
+  // 이메일 입력창 포커스
   setTimeout(() => {
     document.querySelector('#modalEmail').focus();
   }, 100);
@@ -605,32 +609,6 @@ function openEmailModal(index) {
 
 function closeEmailModal() {
   document.querySelector('#emailModal').style.display = 'none';
-}
-
-function saveEmail() {
-  const index = document.querySelector('#modalIndex').value;
-  const newEmail = document.querySelector('#modalEmail').value;
-
-  // 1. 숨겨진 이메일 input 값을 변경
-  const emailInput = document.querySelector(`#email_${index}`);
-  if (!emailInput) {
-    alert("이메일 입력 필드를 찾을 수 없습니다.");
-    return;
-  }
-  emailInput.value = newEmail;
-
-  // 2. 해당 이메일 input이 포함된 form 찾기
-  const form = emailInput.closest('form');
-  if (!form) {
-    alert("폼을 찾을 수 없습니다.");
-    return;
-  }
-
-  // 3. form 제출 (기존 수정 기능 그대로 활용)
-  form.submit();
-
-  // 4. 모달 닫기
-  closeEmailModal();
 }
 </script>
 
