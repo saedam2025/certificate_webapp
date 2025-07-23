@@ -582,17 +582,22 @@ document.addEventListener("DOMContentLoaded", function () {
   <!-- 창뛰워 이메일 수정하기 -->
 
 <!-- 이메일 수정 모달창 -->
-<div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px; z-index:10000;">
-  <h3>이메일 수정</h3>
+<div id="emailModal" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px 30px; border:1px solid #ccc; border-radius:10px; z-index:10000; text-align:center;">
+  <h3 style="margin: 0; font-size: 18px;">이메일 수정</h3>
+  <hr style="margin-top: 8px; margin-bottom: 20px; border: none; border-top: 1px solid #ccc;"> <!-- 🔸가는 회색 선 -->
+
   <form id="emailForm" method="POST">
     <input type="email" name="이메일주소" id="modalEmail" style="width:100%; padding:8px; font-size:14px;" required>
     <input type="hidden" name="index" id="modalIndex">
     <input type="hidden" name="page" value="{{ page }}">
     <br><br>
-    <button type="submit">저장</button>
-    <button type="button" onclick="closeEmailModal()">닫기</button>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+      <button type="submit">저장</button>
+      <button type="button" onclick="closeEmailModal()">닫기</button>
+    </div>
   </form>
 </div>
+
 
   <!-- 창뛰워 이메일 수정하기  ----->
 <script>
