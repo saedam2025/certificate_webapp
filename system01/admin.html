@@ -412,8 +412,9 @@ a.btn.issue:hover {
     </tbody>
   </table>
 
+
 <!-- ✅ 선택삭제 버튼 + 카운터글씨 (왼쪽 정렬) -->
-<div style="margin-top: 10px;">
+
   <div style="display: inline-block; vertical-align: top;">
 
     <!-- 선택삭제 버튼 -->
@@ -424,6 +425,7 @@ a.btn.issue:hover {
       <input type="hidden" name="selected_ids" id="selected_ids_input">
       <button type="submit" class="btn btn-delete">선택삭제</button>
     </form>
+    </div>
 
     <!-- 카운터 박스 -->
     <div class="summary" style="
@@ -440,9 +442,8 @@ a.btn.issue:hover {
       <a href="/{{ system }}/logout" style="text-decoration: none; border: none; margin-left: 10px;">
         <img src="https://www.saedam.org/img_sub/logout.gif" alt="로그아웃" title="로그아웃" style="height: 20px; vertical-align: middle;">
       </a>
-    </div>
   </div>
-</div>
+
 
 <!-- ✅ 페이지네비게이션 (오른쪽 정렬) -->
 <div style="text-align: right; margin-top: -38px;">
@@ -480,7 +481,7 @@ a.btn.issue:hover {
       <a href="/{{ system }}/admin/{{ page + 1 }}">Next »</a>
     {% endif %}
   </div>
-</div>
+
 
 
 
