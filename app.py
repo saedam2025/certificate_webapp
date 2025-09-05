@@ -1,29 +1,410 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session
+from flask import Flask, request, jsonify, render_template, render_template_string, redirect, url_for, send_from_directory, flash, session
 import pandas as pd
-import pdfkit
-from jinja2 import Template
-import smtplib, os
+import smtplib, os, shutil
 from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.application import MIMEApplication
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo # ✅ 미국 서버를 한국 시간으로 조정
-from flask import render_template_string
-import shutil
+from concurrent.futures import ThreadPoolExecutor
+import threading
+import uuid
+from jinja2 import Template
+from zoneinfo import ZoneInfo
+import pdfkit
 
-# ✅ 한국 시간 반환 함수
+"""
+Unified Flask app for Render
+- Part A: Payroll slip email sender (original app.py)
+- Part B: Instructor certificate system (original appf.py)
+
+Notes:
+- Consolidated into a single Flask app instance.
+- Removed duplicate/conflicting routes and function names.
+- Switched credentials to environment variables with safe fallbacks.
+- Verified paths for Render (/mnt/data) and static/templates usage.
+"""
+
+# =============================
+# Common App Setup
+# =============================
+app = Flask(__name__, template_folder=".")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "saedam-super-secret")
+
+# Render's ephemeral disk safe base dir
+BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
+
+# =============================
+# Email Credentials (ENV first)
+# =============================
+# Payroll sender previously hard-coded; now read from env with fallback
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'lunch9797@gmail.com'
+APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'txnb ofpi jgys jpfq'
+# Alternate (commented in original):
+# EMAIL_ADDRESS = 'saedam2025@gmail.com'
+# APP_PASSWORD = 'wjuy bedx stdm szdt'
+
+# =============================
+# Part A — PAYROLL SENDER (from original app.py)
+# =============================
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# in-memory state for progress
+sent_count = 0
+sent_names = []
+sent_count_lock = threading.Lock()
+
+stop_requested = False
+stop_lock = threading.Lock()
+
+# static image cache
+image_cache = {}
+
+def load_images():
+    files = ['logo01.jpg', 'ad1.jpg', 'ad2.jpg', 'ad3.jpg']
+    for fname in files:
+        path = os.path.join('static', fname)
+        try:
+            with open(path, 'rb') as f:
+                image_cache[fname] = f.read()
+        except FileNotFoundError:
+            print(f"⚠️ 이미지 파일 누락: {path} 를 찾을 수 없습니다.")
+        except Exception as e:
+            print(f"❌ {fname} 이미지 로딩 중 오류: {e}")
+
+load_images()
+
+
+def render_email_template(template_name, context):
+    # Payroll sender uses raw template files rendered via string
+    with open(os.path.join('templates', template_name), 'r', encoding='utf-8') as f:
+        template_str = f.read()
+    return render_template_string(template_str, **context)
+
+
+@app.route('/', methods=['GET', 'POST'])
+def payroll_upload_file():
+    """Payroll sender upload + process"""
+    global sent_count, sent_names, stop_requested
+    if request.method == 'POST':
+        with stop_lock:
+            stop_requested = False
+
+        file = request.files.get('excel')
+        if file and file.filename.lower().endswith('.xlsx'):
+            safe_filename = f"{uuid.uuid4()}.xlsx"
+            path = os.path.join(UPLOAD_FOLDER, safe_filename)
+            file.save(path)
+            try:
+                result_html = process_excel(path)
+            except Exception as e:
+                return f"처리 중 오류 발생: {e}"
+            finally:
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+            # keep extra </div> to place button outside result box
+            return (result_html or "") + '</div><br><a href="/" style="padding: 8px 16px; background: #1f3c88; color: #fff; text-decoration: none; border-radius: 5px;">다시 업로드</a>'
+        else:
+            return "엑셀 파일(.xlsx)만 업로드 가능합니다."
+
+    return render_template_string(
+        open("templates/upload_form.html", encoding="utf-8").read(),
+        uuid1=str(uuid.uuid4()), uuid2=str(uuid.uuid4()), uuid3=str(uuid.uuid4())
+    )
+
+
+@app.route("/stop", methods=["POST"])
+def stop_sending():
+    global stop_requested
+    with stop_lock:
+        stop_requested = True
+    return '''
+    <script>
+        alert("발송이 중단되었습니다.");
+        location.href = "/";
+    </script>
+    '''
+
+
+@app.route('/status')
+def status():
+    return jsonify({
+        "sent_count": sent_count,
+        "sent_names": list(reversed(sent_names))  # display newest first
+    })
+
+
+@app.route('/upload_ad_image', methods=['POST'])
+def upload_ad_image():
+    file = request.files.get('ad_file')
+    target = request.form.get('target')
+    if file and target in ['ad1.jpg', 'ad2.jpg', 'ad3.jpg']:
+        save_path = os.path.join('static', target)
+        file.save(save_path)
+        load_images()
+        return '''
+        <script>
+          alert("이미지가 성공적으로 교체되었습니다.");
+          window.location.href = "/";
+        </script>
+        '''
+    else:
+        return "잘못된 요청입니다.", 400
+
+
+def process_excel(filepath):
+    global sent_count, sent_names
+    sent_count = 0
+    sent_names = []
+    summary_by_sheet = {}
+
+    # header row at index 2 (3rd Excel row)
+    excel_data = pd.read_excel(filepath, sheet_name=None, header=2)
+
+    def format_account_number(account_number):
+        account_number = ''.join(filter(str.isdigit, account_number))
+        return '-'.join([account_number[i:i+4] for i in range(0, len(account_number), 4)])
+
+    def process_row(row, template_name, sheet_summary):
+        global EMAIL_ADDRESS, APP_PASSWORD, stop_requested, sent_count
+
+        with stop_lock:
+            if stop_requested:
+                return
+
+        try:
+            name_raw = row.get('강사명') or row.get('직원명')
+            name = str(name_raw).strip() if pd.notna(name_raw) else ''
+            receiver_raw = row.get('이메일')
+            receiver = str(receiver_raw).strip() if pd.notna(receiver_raw) else ''
+
+            # validation
+            has_name = name.lower() not in ('', 'nan', 'none', 'non')
+            has_email = receiver.lower() not in ('', 'nan', 'none', 'non')
+
+            # both missing → skip entirely
+            if not has_name and not has_email:
+                return
+
+            # if either missing → show red message (no send)
+            if not (has_name and has_email):
+                display_name = name if has_name else '이름 없음'
+                display_email = receiver if has_email else '이메일 없음'
+                msg = f"<span style='color:red;'>{display_name} - 이메일: {display_email}</span>"
+                with sent_count_lock:
+                    sent_names.append(msg)
+                    sheet_summary.append(msg)
+                return
+
+            job = str(row.get('학교명', '')).strip()
+            subject = str(row.get('과목', '')).strip()
+            bank = str(row.get('은행', '')).strip()
+            account_src = str(row.get('계좌번호', '')).split('.')[0].strip()
+            account = format_account_number(account_src) if account_src else ''
+            today = datetime.today().strftime('%Y년 %m월 %d일')
+
+            def safe_amount(_row, key):
+                try:
+                    val = _row.get(key)
+                    if val is None or (isinstance(val, float) and pd.isna(val)):
+                        return "0"
+                    s = str(val).replace(',', '').strip()
+                    return f"{int(float(s)):,}"
+                except:
+                    return "0"
+
+            def safe_text(_row, key):
+                try:
+                    val = _row.get(key)
+                    if val is None or (isinstance(val, float) and pd.isna(val)):
+                        return ''
+                    return str(val).strip()
+                except:
+                    return ''
+
+            def to_int(v):
+                try:
+                    return int(float(str(v).replace(',', '').strip()))
+                except:
+                    return 0
+
+            real_amount = to_int(row.get('지급총액')) - to_int(row.get('공제총액'))
+            income_tax_total = to_int(row.get('근로소득세')) + to_int(row.get('지방소득세'))
+
+            remark_val = row.get('강사전달비고') or row.get('직원전달비고') or row.get('전달비고') or ''
+            remark = (str(remark_val).strip() if pd.notna(remark_val) else '') or '&nbsp;'
+
+            context = {
+                'name': name,
+                'job': job,
+                'subject': subject,
+                'bank': bank,
+                'account': account,
+                'remark': remark,
+                'today': today,
+                'real_amount': real_amount,
+                'row': row,
+                'safe_amount': safe_amount,
+                'income_tax_total': income_tax_total,
+                'safe_text': safe_text
+            }
+
+            with app.app_context():
+                html = render_email_template(template_name, context)
+                msg = MIMEMultipart('related')
+                msg['Subject'] = f'[새담 지급명세서] {name}님 - {today}'
+                msg['From'] = EMAIL_ADDRESS
+                msg['To'] = receiver
+
+                html_part = MIMEMultipart('alternative')
+                html_part.attach(MIMEText(html, 'html'))
+                msg.attach(html_part)
+
+                # teacher vs others ad rule
+                image_list = [
+                    ('logo_image', 'logo01.jpg'),
+                    ('ad1_image', 'ad1.jpg'),
+                    ('ad2_image', 'ad2.jpg' if template_name == 'teacher.html' else 'ad3.jpg')
+                ]
+
+                for cid, fname in image_list:
+                    img_data = image_cache.get(fname)
+                    if img_data:
+                        mime_img = MIMEImage(img_data, _subtype='jpeg')
+                        mime_img.add_header('Content-ID', f'<{cid}>')
+                        msg.attach(mime_img)
+
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                    smtp.login(EMAIL_ADDRESS, APP_PASSWORD)
+                    smtp.send_message(msg)
+
+                with sent_count_lock:
+                    sent_names.append(f"{job} - {name}")
+                    sheet_summary.append(f"{job} - {name}")
+                    sent_count += 1
+
+        except Exception as e:
+            print(f"❌ {row.get('강사명', row.get('직원명', '이름없음'))} 실패: {e}")
+
+    # template rules
+    template_rules = [
+        (['강사', '선택형', '맞춤형'], 'teacher.html'),
+        (['직원근로자'], 'employee_worker.html'),
+        (['직원사업자'], 'employee_business.html'),
+        (['퇴직자'], 'retired.html'),
+    ]
+    DEFAULT_TEMPLATE = 'teacher.html'
+
+    def pick_template(payroll_type_raw: str) -> str:
+        s = (payroll_type_raw or '').strip()
+        s_lower = str(s).lower()
+        for keywords, tpl in template_rules:
+            for kw in keywords:
+                if kw.lower() in s_lower:
+                    return tpl
+        return DEFAULT_TEMPLATE
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for sheet_name, df in excel_data.items():
+            df.columns = df.columns.str.strip()
+            sheet_summary = []
+
+            # try to infer template from first row of the raw sheet
+            try:
+                raw_df = pd.read_excel(filepath, sheet_name=sheet_name, header=None)
+                first_row = raw_df.iloc[0].astype(str).str.strip().tolist()
+                all_keywords = [kw for kws, _ in template_rules for kw in kws]
+                payroll_type = next(
+                    (v for v in first_row if any(kw.lower() in v.lower() for kw in all_keywords)),
+                    ''
+                )
+            except Exception:
+                payroll_type = ''
+
+            template_name = pick_template(payroll_type)
+
+            for _, row in df.iterrows():
+                executor.submit(process_row, row, template_name, sheet_summary)
+
+            summary_by_sheet[sheet_name] = sheet_summary
+
+    # result HTML
+    result_html = f"""
+    <html><head><meta charset='UTF-8'>
+    <style>
+      body {{ font-family: 'Nanum Gothic', sans-serif; padding: 40px; background:#f7f8fb; }}
+      .result-box {{ background: #fff; border:1px solid #e5e7eb; padding: 20px; border-radius: 8px; }}
+      h2 {{ margin-top:0; }}
+      h3 {{ margin-bottom:10px; }}
+      table {{ border-collapse: collapse; width:100%; }}
+      td {{ padding: 6px 10px; vertical-align: top; }}
+      .sheet {{ margin-bottom:18px; }}
+    </style></head><body>
+    <h2>총 {sent_count}명 메일 발송 완료</h2><div class='result-box'>
+    """
+    for sheet, names in summary_by_sheet.items():
+        result_html += f"<div class='sheet'><h3>시트명: {sheet} (총 {len(names)}명)</h3><div class='result-box'><table><tr>"
+        for idx, entry in enumerate(names, 1):
+            result_html += f"<td>• {entry}&nbsp;&nbsp;&nbsp;&nbsp;</td>"
+            if idx % 10 == 0:
+                result_html += "</tr><tr>"
+        result_html += "</tr></table></div></div>"
+
+    result_html += "</div></body></html>"
+
+    return result_html
+
+
+# =============================
+# Part B — CERTIFICATE SYSTEM (from original appf.py)
+# =============================
+
+# wkhtmltopdf configuration (Render compatible)
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
+config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+
+# PDF output folders
+pdf_folder1 = os.path.join(BASE_DIR, "output_pdfs01")
+pdf_folder2 = os.path.join(BASE_DIR, "output_pdfs02")
+os.makedirs(pdf_folder1, exist_ok=True)
+os.makedirs(pdf_folder2, exist_ok=True)
+
+# System passwords
+USER_PASSWORDS = {
+    "system01": os.environ.get("USER_PW_SYS01", "0070"),
+    "system02": os.environ.get("USER_PW_SYS02", "0070"),
+}
+
+ADMIN_PASSWORDS = {
+    "system01": os.environ.get("ADMIN_PW_SYS01", "1900"),
+    "system02": os.environ.get("ADMIN_PW_SYS02", "8016"),
+}
+
+# Admin notification targets
+ADMIN_EMAILS = {
+    "system01": os.environ.get("ADMIN_EMAIL_SYS01", "lunch97@naver.com"),
+    "system02": os.environ.get("ADMIN_EMAIL_SYS02", "windows7@hanmail.net"),
+}
+
+SEAL_IMAGE = "seal.gif"
+
+# Time helpers
+
 def now_kst():
     return datetime.now(ZoneInfo("Asia/Seoul"))
 
-# ✅ 발급번호 생성============================
+# Issue number helpers
+
 def get_year_prefix():
     return now_kst().strftime('%y')
 
 def get_next_issue_number():
     year_prefix = get_year_prefix()
-    file_name = os.path.join("/mnt/data", f"last_number_{year_prefix}.txt")
+    file_name = os.path.join(BASE_DIR, f"last_number_{year_prefix}.txt")
 
-    # 파일이 없으면 0부터 시작
     if not os.path.exists(file_name):
         last = 0
     else:
@@ -31,63 +412,24 @@ def get_next_issue_number():
             try:
                 last = int(f.read().strip())
             except ValueError:
-                last = 0  # 혹시 파일 내용이 비어있거나 이상할 경우 대비
+                last = 0
 
     next_number = last + 1
-
-    # 새로운 번호 저장
     with open(file_name, 'w') as f:
         f.write(str(next_number))
 
     return f"제{year_prefix}-{next_number:04d}호"
-# ✅ 발급번호 생성============================
 
 
-
-WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/bin/wkhtmltopdf"
-config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
-
-app = Flask(__name__, template_folder=".")
-app.secret_key = "saedam-super-secret"
-
-# pdf저장디렉토리
-base_dir = "/mnt/data" if os.path.exists("/mnt/data") else "."
-
-pdf_folder1 = os.path.join(base_dir, "output_pdfs01")
-pdf_folder2 = os.path.join(base_dir, "output_pdfs02")
-
-os.makedirs(pdf_folder1, exist_ok=True)
-os.makedirs(pdf_folder2, exist_ok=True)
-
-# 시스템별 비밀번호
-USER_PASSWORDS = {
-    "system01": "0070",
-    "system02": "0070"
-}
-
-ADMIN_PASSWORDS = {
-    "system01": "1900",
-    "system02": "8016"
-}
-
- # system02 담당자 이메일
-ADMIN_EMAILS = {
-    "system01": "lunch97@naver.com",
-    "system02": "windows7@hanmail.net" 
-}
-
-SEAL_IMAGE = "seal.gif"
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
-APP_PASSWORD = os.environ.get("APP_PASSWORD")
-
- # 신청오면 메일보내주기 시작----------
 def send_admin_notification(system, name, cert_type):
     to_email = ADMIN_EMAILS.get(system)
     if not to_email:
         print(f"❌ 시스템에 맞는 이메일 없음: {system}")
         return
 
-    msg = MIMEText(f"새담 홈페이지를 통해 새로운 강사 경력증명발급 신청이 접수되었습니다.\n\n시스템: {system}\n\n신청자: {name}\n\n증명서 종류: {cert_type}")
+    msg = MIMEText(
+        f"새담 홈페이지를 통해 새로운 강사 경력증명발급 신청이 접수되었습니다.\n\n시스템: {system}\n\n신청자: {name}\n\n증명서 종류: {cert_type}"
+    )
     msg['Subject'] = f'[{system.upper()}] 새담 강사경력증명서 신청 알림 (신청자: {name})'
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = to_email
@@ -99,7 +441,6 @@ def send_admin_notification(system, name, cert_type):
             print(f"✅ 신청 알림 메일 전송됨: {to_email}")
     except Exception as e:
         print(f"❌ 메일 전송 실패: {e}")
- # 신청오면 메일보내주기 끝----------
 
 
 def ensure_data_file(data_path):
@@ -110,11 +451,14 @@ def ensure_data_file(data_path):
             "이메일주소", "상태", "발급일", "발급번호", "종료사유"
         ]).to_excel(data_path, index=False)
 
+
 def format_korean_date(date_str):
     dt = datetime.strptime(date_str, "%Y-%m-%d")
-    return dt.strftime("%Y년 %#m월 %#d일")
+    # On Linux, %-m/%-d would avoid leading zeros; Windows used %#m. Keep generic.
+    return dt.strftime("%Y년 %m월 %d일")
 
-def send_email(to_email, name, pdf_path, certificate_type):
+
+def send_certificate_email(to_email, name, pdf_path, certificate_type):
     msg = MIMEMultipart()
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = to_email
@@ -129,43 +473,52 @@ def send_email(to_email, name, pdf_path, certificate_type):
         server.login(EMAIL_ADDRESS, APP_PASSWORD)
         server.send_message(msg)
 
-def generate_pdf(row, 발급번호, system):
+
+def generate_pdf(row, issue_no, system):
     template_path = "certificate_template.html"
     with open(template_path, "r", encoding="utf-8") as f:
         template = Template(f.read())
-    시작일 = format_korean_date(row["근무시작일"])
-    종료일 = "현재까지" if row["근무종료일"] == "현재까지" else format_korean_date(row["근무종료일"])
-    주민번호_원본 = row["주민번호"]
-    if "-" in 주민번호_원본:
-        앞, 뒤 = 주민번호_원본.split("-")
-        마스킹주민번호 = 앞 + "-" + 뒤[0] + "******"
+
+    def fmt(date_val):
+        return "현재까지" if date_val == "현재까지" else format_korean_date(date_val)
+
+    resident_raw = row["주민번호"]
+    if "-" in resident_raw:
+        앞, 뒤 = resident_raw.split("-")
+        masked_resident = 앞 + "-" + 뒤[0] + "******"
     else:
-        마스킹주민번호 = 주민번호_원본
+        masked_resident = resident_raw
+
     html = template.render(
         증명서종류=row.get("증명서종류", ""),
         성명=row["성명"],
-        주민번호=마스킹주민번호,
+        주민번호=masked_resident,
         주소=row["자택주소"],
         과목=row["강의과목"],
         용도=row.get("용도", ""),
         직책=row.get("직책", ""),
         장소=row["근무장소"],
-        시작=시작일,
-        종료=종료일,
+        시작=fmt(row["근무시작일"]),
+        종료=fmt(row["근무종료일"]),
         종료사유=row.get("종료사유", ""),
         발급일자=now_kst().strftime("%Y년 %m월 %d일"),
-        발급번호=발급번호
+        발급번호=issue_no
     )
+
+    # Seal absolute path for wkhtmltopdf
     seal_path = os.path.abspath(SEAL_IMAGE)
     html = html.replace('src="seal.gif"', f'src="file:///{seal_path}"')
-    output_dir = os.path.join("/mnt/data", f"output_pdfs{system[-2:]}")
+
+    output_dir = os.path.join(BASE_DIR, f"output_pdfs{system[-2:]}")
     os.makedirs(output_dir, exist_ok=True)
     cert_type = row.get("증명서종류", "증명서").replace(" ", "")
-    output_path = os.path.join(output_dir, f"{발급번호}_{row['성명']}_{cert_type}.pdf")
+    output_path = os.path.join(output_dir, f"{issue_no}_{row['성명']}_{cert_type}.pdf")
     options = {'enable-local-file-access': ''}
     pdfkit.from_string(html, output_path, configuration=config, options=options)
     return output_path
 
+
+# ---- Convenience redirects for system roots ----
 @app.route("/system01/")
 def redirect_system01():
     return redirect(url_for("form_login", system="system01"))
@@ -174,44 +527,59 @@ def redirect_system01():
 def redirect_system02():
     return redirect(url_for("form_login", system="system02"))
 
+
+# ---- CRUD & Workflows ----
 @app.route('/<system>/update/<int:idx>', methods=['POST'])
-def update(system, idx):
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    page = int(request.form.get("page", 1))  # 🔹 page 값 받기
+def update_submission(system, idx):
+    data_path = os.path.join(BASE_DIR, f"pending_submissions_{system[-2:]}.xlsx")
+    page = int(request.form.get("page", 1))
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
     form_data = dict(request.form)
 
-    # 수정 반영
+    # apply edits
     for key in form_data:
         df.at[idx, key] = form_data[key]
 
-    # 역순 저장
+    # save in original order
     original_df = pd.read_excel(data_path)
     original_index = len(original_df) - 1 - idx
     for key in form_data:
         original_df.at[original_index, key] = form_data[key]
     original_df.to_excel(data_path, index=False)
-    flash('수정이 완료되었습니다')  # ✅ 메시지 추가
-    return redirect(url_for('admin', system=system, page=page))  # 🔹 해당 페이지로 이동
+    flash('수정이 완료되었습니다')
+    return redirect(url_for('admin', system=system, page=page))
 
 
 @app.route('/<system>/delete/<int:idx>')
-def delete(system, idx):
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    page = int(request.args.get("page", 1))  # 🔹 쿼리스트링에서 page 받기
+def delete_submission_simple(system, idx):
+    """Delete row AND corresponding PDF if exists (merged behavior)."""
+    data_path = os.path.join(BASE_DIR, f"pending_submissions_{system[-2:]}.xlsx")
+    page = int(request.args.get("page", 1))
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
+
+    # remove PDF if present
+    row = df.iloc[idx]
+    issue_no = str(row.get("발급번호", "")).strip()
+    name = str(row.get("성명", "")).strip()
+    cert_type = str(row.get("증명서종류", "증명서")).replace(" ", "")
+    pdf_dir = os.path.join(BASE_DIR, f"output_pdfs{system[-2:]}")
+    pdf_filename = f"{issue_no}_{name}_{cert_type}.pdf"
+    pdf_path = os.path.join(pdf_dir, pdf_filename)
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
+    # drop row and save back in original order
     df = df.drop(index=idx).reset_index(drop=True)
-    # 역순 저장
     final_df = df.iloc[::-1].reset_index(drop=True)
     final_df.to_excel(data_path, index=False)
-    return redirect(url_for('admin', system=system, page=page))  # 🔹 해당 페이지로 이동
+    return redirect(url_for('admin', system=system, page=page))
 
 
 @app.route('/<system>/submit', methods=['POST'])
 def submit(system):
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    data_path = os.path.join(BASE_DIR, f"pending_submissions_{system[-2:]}.xlsx")
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
 
@@ -239,17 +607,16 @@ def submit(system):
     df.loc[len(df)] = row_data
     df.to_excel(data_path, index=False)
 
-    # ✅ 인증 세션 유지
+    # keep user session authenticated
     session[f'user_authenticated_{system}'] = True
 
-    # ✅ 알림 메일 전송
+    # notify admins
     send_admin_notification(system, row_data["성명"], row_data["증명서종류"])
 
     return render_template(f"{system}/success.html", system=system, **row_data)
 
 
-    # 패스워드 걸기 시작===================
-
+# ---- Auth gates ----
 @app.route('/<system>/form', methods=['GET', 'POST'])
 def form_login(system):
     if request.method == 'POST':
@@ -260,8 +627,9 @@ def form_login(system):
         else:
             flash("비밀번호가 틀렸습니다.")
             return redirect(url_for('form_login', system=system))
-    
+
     return render_template(f"{system}/form_login.html", system=system, title="경력증명서 신청")
+
 
 @app.route('/<system>/form_page', methods=['GET', 'POST'])
 def show_form(system):
@@ -271,7 +639,6 @@ def show_form(system):
 
     return render_template(f"{system}/form.html", system=system)
 
-    #로그인 처리 ----------------------------------------------------------------------------))))))
 
 @app.route("/<system>/admin", defaults={'page': 1}, methods=["GET", "POST"])
 @app.route("/<system>/admin/<int:page>", methods=["GET", "POST"])
@@ -289,8 +656,7 @@ def admin(system, page):
     if not session.get(f"{system}_authenticated"):
         return render_template(f"{system}/admin_login.html", system=system)
 
-    # ✅ 여기가 admin 함수의 마지막 부분
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    data_path = os.path.join(BASE_DIR, f"pending_submissions_{system[-2:]}.xlsx")
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
@@ -316,10 +682,6 @@ def admin(system, page):
         system=system
     )
 
-    #로그인 처리 끝 ----------------------------------------------------------------------------))))))
-
-
-    # 게시물 선택삭제하기 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @app.route("/<system>/bulk_delete", methods=["POST"])
 def bulk_delete(system):
@@ -331,16 +693,16 @@ def bulk_delete(system):
         return redirect(url_for('admin', system=system, page=page))
 
     selected_indices = [int(i) for i in ids_str.split(',') if i.isdigit()]
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    pdf_folder = f"/mnt/data/output_pdfs{system[-2:]}"
-    
+    data_path = os.path.join(BASE_DIR, f"pending_submissions_{system[-2:]}.xlsx")
+    pdf_folder = os.path.join(BASE_DIR, f"output_pdfs{system[-2:]}")
+
     original_df = pd.read_excel(data_path)
     total_len = len(original_df)
 
-    # ✅ 사용자 눈에 보이는 idx → 실제 역순 인덱스로 변환
+    # map visible indices to original order
     original_indices = [total_len - 1 - i for i in selected_indices]
 
-    for idx in sorted(original_indices, reverse=True):  # 역순으로 삭제
+    for idx in sorted(original_indices, reverse=True):
         row = original_df.iloc[idx]
         pdf_filename = f"{row['발급번호']}_{row['성명']}_{row['증명서종류'].replace(' ', '')}.pdf"
         pdf_path = os.path.join(pdf_folder, pdf_filename)
@@ -354,125 +716,47 @@ def bulk_delete(system):
     original_df.reset_index(drop=True, inplace=True)
     original_df.to_excel(data_path, index=False)
 
-    # ✅ 여기! PDF 남은 파일 확인
-    print("📁 현재 폴더 내 PDF:", os.listdir(pdf_folder))
-
     flash(f"{len(selected_indices)}건이 삭제되었습니다.")
     return redirect(url_for('admin', system=system, page=page))
 
 
-    # 게시물 선택삭제 끝  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-  #------------------------------------------------로그아웃 처리 --------------
 @app.route("/<system>/logout")
 def logout(system):
     session.pop(f"{system}_authenticated", None)
     return redirect(url_for("admin", system=system))
 
+
 @app.route('/<system>/pdf/<filename>')
 def download_pdf(system, filename):
-    pdf_dir = f"/mnt/data/output_pdfs{system[-2:]}"  # 예: output_pdfs01
+    pdf_dir = os.path.join(BASE_DIR, f"output_pdfs{system[-2:]}")
     return send_from_directory(pdf_dir, filename)
 
-# ✅ 발급번호 생성 방식 변경 적용된 generate 함수
+
 @app.route("/<system>/generate/<int:idx>")
 def generate(system, idx):
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
+    data_path = os.path.join(BASE_DIR, f"pending_submissions_{system[-2:]}.xlsx")
     page = int(request.args.get("page", 1))
     ensure_data_file(data_path)
     df = pd.read_excel(data_path)
     df = df.iloc[::-1].reset_index(drop=True)
     row = df.iloc[idx]
 
-    # ✅ 발급번호 생성 방식 변경
-    발급번호 = get_next_issue_number()
-
-    pdf = generate_pdf(row, 발급번호, system)
-    send_email(row["이메일주소"], row["성명"], pdf, row["증명서종류"])
+    issue_no = get_next_issue_number()
+    pdf_path = generate_pdf(row, issue_no, system)
+    send_certificate_email(row["이메일주소"], row["성명"], pdf_path, row["증명서종류"])
 
     original_df = pd.read_excel(data_path)
     original_index = len(original_df) - 1 - idx
     original_df.at[original_index, "상태"] = "발급완료"
     original_df.at[original_index, "발급일"] = now_kst().strftime("%Y-%m-%d")
-    original_df.at[original_index, "발급번호"] = 발급번호
+    original_df.at[original_index, "발급번호"] = issue_no
     original_df.to_excel(data_path, index=False)
 
     return redirect(url_for("admin", system=system, page=page))
 
-# ✅ 삭제 라우트: 엑셀 행 + PDF 함께 삭제
-@app.route("/<system>/delete/<int:idx>", methods=["POST"])
-def delete_submission(system, idx):
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-    ensure_data_file(data_path)
-    df = pd.read_excel(data_path)
-    df = df.iloc[::-1].reset_index(drop=True)
-    row = df.iloc[idx]
 
-    # PDF 파일 삭제 시도
-    발급번호 = str(row.get("발급번호", "")).strip()
-    성명 = str(row.get("성명", "")).strip()
-    cert_type = str(row.get("증명서종류", "증명서")).replace(" ", "")
-    pdf_folder = os.path.join(base_dir, f"output_pdfs{system[-2:]}")
-    pdf_filename = f"{발급번호}_{성명}_{cert_type}.pdf"
-    pdf_path = os.path.join(pdf_folder, pdf_filename)
-
-    if os.path.exists(pdf_path):
-        os.remove(pdf_path)
-
-    # 행 삭제 후 역순 저장
-    df = df.drop(index=idx).reset_index(drop=True)
-    final_df = df.iloc[::-1].reset_index(drop=True)
-    final_df.to_excel(data_path, index=False)
-
-    flash("삭제가 완료되었습니다.")
-    return redirect(url_for("admin", system=system))
-
-
-
-# ✅ 이메일 수정창 부분=============================
-@app.route("/<system>/update_email", methods=["POST"])
-def update_email(system):
-    index = request.form.get("index")
-    new_email = request.form.get("이메일주소")
-    page = request.form.get("page", 1)
-
-    try:
-        index = int(index)
-        page = int(page)
-    except ValueError:
-        flash("유효하지 않은 인덱스입니다.")
-        return redirect(url_for("admin", system=system, page=page))
-
-    data_path = os.path.join(base_dir, f"pending_submissions_{system[-2:]}.xlsx")
-
-    # 1. 엑셀 파일을 역순으로 로드하고 인덱스 재정렬
-    df = pd.read_excel(data_path)
-    df = df.iloc[::-1].reset_index(drop=True)
-
-    # 2. 유효한 인덱스인지 확인
-    if index < 0 or index >= len(df):
-        flash("유효하지 않은 인덱스입니다.")
-        return redirect(url_for("admin", system=system, page=page))
-
-    # 3. 이메일 주소 수정
-    df.at[index, "이메일주소"] = new_email
-
-    # 4. 다시 역순으로 저장
-    final_df = df.iloc[::-1].reset_index(drop=True)
-    final_df.to_excel(data_path, index=False)
-
-    flash("이메일이 성공적으로 수정되었습니다.")
-    return redirect(url_for("admin", system=system, page=page))
-
-
-
-# ✅  PDF 생성
-@app.route("/<system>/pdf/<filename>")
-def serve_pdf(system, filename):
-    return send_from_directory(f"output_pdfs{system[-2:]}", filename)
-
-
+# =============================
+# Entry Point
+# =============================
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
