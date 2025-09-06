@@ -386,7 +386,7 @@ ADMIN_PASSWORDS = {
 # Admin notification targets
 ADMIN_EMAILS = {
     "system01": os.environ.get("ADMIN_EMAIL_SYS01", "lunch97@naver.com"),
-    "system02": os.environ.get("ADMIN_EMAIL_SYS02", "windows7@hanmail.net"),
+    "system02": os.environ.get("ADMIN_EMAIL_SYS02", "comedu74@nate.com"),
 }
 
 SEAL_IMAGE = "seal.gif"
