@@ -38,11 +38,12 @@ BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
 # Email Credentials (ENV first)
 # =============================
 # Payroll sender previously hard-coded; now read from env with fallback
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'lunch9797@gmail.com'
-APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'txnb ofpi jgys jpfq'
+#EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'lunch9797@gmail.com'
+#APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'txnb ofpi jgys jpfq'
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'saedam2025@gmail.com'
+APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'wjuy bedx stdm szdt'
 # Alternate (commented in original):
-# EMAIL_ADDRESS = 'saedam2025@gmail.com'
-# APP_PASSWORD = 'wjuy bedx stdm szdt'
+
 
 # =============================
 # Part A — PAYROLL SENDER (from original app.py)
