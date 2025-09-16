@@ -210,35 +210,39 @@
       </div>
     </div>
 
-    <h2 class="section-title" style="font-size:16px; color:#1f3c88; text-align: center;">📢 알림판 이미지 교체</h2>
-    <div class="ad-section-wrapper">
-      <div class="ad-section">
-        <img src="/static/ad1.jpg?{{ uuid1 }}">
-        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
-          <input type="hidden" name="target" value="ad1.jpg">
-          <input type="file" name="ad_file" accept="image/*" required>
-          <button type="submit" class="submit-btn">알림판1 공용 교체</button>
-        </form>
-      </div>
+<h2 class="section-title" style="font-size:16px; color:#1f3c88; text-align: center;">📢 알림판 이미지 교체</h2>
+<div class="ad-section-wrapper">
+  <div class="ad-section">
+    <img src="/static/send01/ad1.jpg?{{ uuid1 }}">
+    <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+      <input type="hidden" name="bucket" value="send01">
+      <input type="hidden" name="target" value="ad1.jpg">
+      <input type="file" name="ad_file" accept="image/*" required>
+      <button type="submit" class="submit-btn">알림판1 공용 교체</button>
+    </form>
+  </div>
 
-      <div class="ad-section">
-        <img src="/static/ad2.jpg?{{ uuid2 }}">
-        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
-          <input type="hidden" name="target" value="ad2.jpg">
-          <input type="file" name="ad_file" accept="image/*" required>
-          <button type="submit" class="submit-btn">알림판2 강사용 교체</button>
-        </form>
-      </div>
+  <div class="ad-section">
+    <img src="/static/send01/ad2.jpg?{{ uuid2 }}">
+    <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+      <input type="hidden" name="bucket" value="send01">
+      <input type="hidden" name="target" value="ad2.jpg">
+      <input type="file" name="ad_file" accept="image/*" required>
+      <button type="submit" class="submit-btn">알림판2 강사용 교체</button>
+    </form>
+  </div>
 
-      <div class="ad-section">
-        <img src="/static/ad3.jpg?{{ uuid3 }}">
-        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
-          <input type="hidden" name="target" value="ad3.jpg">
-          <input type="file" name="ad_file" accept="image/*" required>
-          <button type="submit" class="submit-btn">알림판2 직원용 교체</button>
-        </form>
-      </div>
-    </div>
+  <div class="ad-section">
+    <img src="/static/send01/ad3.jpg?{{ uuid3 }}">
+    <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+      <input type="hidden" name="bucket" value="send01">
+      <input type="hidden" name="target" value="ad3.jpg">
+      <input type="file" name="ad_file" accept="image/*" required>
+      <button type="submit" class="submit-btn">알림판2 직원용 교체</button>
+    </form>
+  </div>
+</div>
+
   </div>
 
   <script>
