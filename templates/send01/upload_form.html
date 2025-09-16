@@ -223,7 +223,7 @@
 
       <div class="ad-section">
         <img src="/static/ad2.jpg?{{ uuid2 }}">
-        <form method="POST" action="/upload_ad_image" enctype="multipart/form-data">
+        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
           <input type="hidden" name="target" value="ad2.jpg">
           <input type="file" name="ad_file" accept="image/*" required>
           <button type="submit" class="submit-btn">알림판2 강사용 교체</button>
@@ -232,7 +232,7 @@
 
       <div class="ad-section">
         <img src="/static/ad3.jpg?{{ uuid3 }}">
-        <form method="POST" action="/upload_ad_image" enctype="multipart/form-data">
+        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
           <input type="hidden" name="target" value="ad3.jpg">
           <input type="file" name="ad_file" accept="image/*" required>
           <button type="submit" class="submit-btn">알림판2 직원용 교체</button>
