@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>급여명세서 발송</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <style>
+    body {
+      font-family: 'Nanum Gothic', sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 670px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      padding: 32px 36px;
+    }
+
+    .main-title {
+      max-width: 628px;
+      font-size: 22px;
+      color: white;
+      background-color: #1f3c88;
+      padding: 16px 20px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .file-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .file-display {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    #file-name {
+      font-size: 14px;
+      color: #555;
+      background-color: #f0f0f0;
+      padding: 11px 12px;
+      border-radius: 6px;
+      min-width: 440px;
+    }
+
+    .file-label {
+      background-color: #e9f0fb;
+      color: #1f3c88;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      border: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      font-weight: bold;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .file-label:hover {
+      background-color: #F5B027;
+      color: white;
+    }
+
+    .submit-btn {
+      background-color: transparent;
+      color: #1f3c88;
+      border: 1px solid #1f3c88;
+      padding: 10px 0;
+      font-size: 14px;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 506px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background-color: #eaf0ff;
+    }
+
+    .submit-btn2 {
+      background-color: #ffb6c1;
+      color: black;
+      border: 1px solid #e74c3c;
+      padding: 10px 0;
+      font-size: 14px;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 150px;
+      margin-top: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .submit-btn2:hover {
+      background-color: #e74c3c;
+      color: white;
+      border-color: #ffb6c1;
+    }
+
+    .status-box {
+      width: 632px;
+      margin-top: 20px;
+      background: #fff;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 6px rgba(0,0,0,0.08);
+    }
+
+    .ad-section-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 76px;
+      margin-top: 10px;
+      padding-left: 2px;
+    }
+
+    .ad-section {
+      width: 170px;
+    }
+
+    .ad-section img {
+      width: 100%;
+      height: 250px;
+      object-fit: contain;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+
+    .ad-section input[type="file"] {
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      width: 625px;
+      font-size: 18px;
+      color: #1f3c88;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin: 40px 0px 0px 0px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2 class="main-title">새담 지급명세서 발송 시스템</h2>
+
+    <form id="excel-form" method="post" enctype="multipart/form-data" action="/send01">
+      <div class="file-wrapper">
+        <div class="file-display">
+          <div id="file-name">[선택된 파일 없음]  *.xlsx 형식의 파일만 업로드 가능합니다.</div>
+          <label for="excel" class="file-label">📁 엑셀파일 선택</label>
+        </div>
+        <input type="file" name="excel" id="excel" onchange="updateFileName(this)" style="display:none;">
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" class="submit-btn2" onclick="stopSending();">⛔ 발송 중단</button>
+        <button type="submit" class="submit-btn">📤 발송 시작</button>
+      </div>
+    </form>
+
+    <script>
+      function stopSending() {
+        fetch('/send01/stop', { method: 'POST' })
+          .then(response => response.text())
+          .then(html => {
+            document.open();
+            document.write(html);
+            document.close();
+          });
+      }
+    </script>
+
+    <div class="status-box">
+      <span style="display: block; font-size:16px; color:#1f3c88; text-align: center; font-weight: bold; margin-bottom: 16px;">📊 발송 진행 상황</span>
+      <div id="status-message" style="
+        font-size: 14px;
+        color: #333;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        height: 120px;
+        overflow-y: auto;
+        white-space: normal;
+      ">
+        아직 시작되지 않았습니다.
+      </div>
+    </div>
+
+    <h2 class="section-title" style="font-size:16px; color:#1f3c88; text-align: center;">📢 알림판 이미지 교체</h2>
+    <div class="ad-section-wrapper">
+      <div class="ad-section">
+        <img src="/static/ad1.jpg?{{ uuid1 }}">
+        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+          <input type="hidden" name="target" value="ad1.jpg">
+          <input type="file" name="ad_file" accept="image/*" required>
+          <button type="submit" class="submit-btn">알림판1 공용 교체</button>
+        </form>
+      </div>
+
+      <div class="ad-section">
+        <img src="/static/ad2.jpg?{{ uuid2 }}">
+        <form method="POST" action="/upload_ad_image" enctype="multipart/form-data">
+          <input type="hidden" name="target" value="ad2.jpg">
+          <input type="file" name="ad_file" accept="image/*" required>
+          <button type="submit" class="submit-btn">알림판2 강사용 교체</button>
+        </form>
+      </div>
+
+      <div class="ad-section">
+        <img src="/static/ad3.jpg?{{ uuid3 }}">
+        <form method="POST" action="/upload_ad_image" enctype="multipart/form-data">
+          <input type="hidden" name="target" value="ad3.jpg">
+          <input type="file" name="ad_file" accept="image/*" required>
+          <button type="submit" class="submit-btn">알림판2 직원용 교체</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateFileName(input) {
+      const fileName = input.files.length > 0 ? input.files[0].name : "선택된 파일 없음";
+      document.getElementById("file-name").textContent = fileName;
+    }
+
+    let started = false;
+
+    document.querySelector("#excel-form").addEventListener("submit", function (e) {
+      const fileInput = document.getElementById("excel");
+      if (!fileInput.files.length) {
+        alert("📂 엑셀파일을 선택하지 않았습니다.");
+        e.preventDefault();
+        return;
+      }
+
+      started = true;
+      document.getElementById("status-message").textContent = "메일을 발송 중입니다...";
+    });
+
+    setInterval(() => {
+      if (!started) return;
+
+      fetch('/send01/status')
+        .then(res => res.json())
+        .then(data => {
+          const { sent_count, sent_names } = data;
+
+          let tableRows = "<table style='width:100%;'>";
+          sent_names.forEach((name, index) => {
+            if (index % 5 === 0) tableRows += "<tr>";
+            tableRows += `<td style="padding: 4px; white-space: nowrap;">• ${name}</td>`;
+            if (index % 5 === 4) tableRows += "</tr>";
+          });
+          if (sent_names.length % 5 !== 0) tableRows += "</tr>";
+          tableRows += "</table>";
+
+          document.getElementById("status-message").innerHTML = `
+            총 <strong>${sent_count}</strong>명 발송 완료<br>
+            <div style="margin-top:8px;">${tableRows}</div>
+          `;
+        });
+    }, 5000);
+  </script>
+</body>
+</html>
