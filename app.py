@@ -1,17 +1,29 @@
-from flask import Flask, request, jsonify, render_template, render_template_string, redirect, url_for, send_from_directory, flash, session
+# ===== Imports (deduped) =====
+# 표준 라이브러리
+import os
+import re
+import shutil
+import uuid
+import threading
+import smtplib
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+from zoneinfo import ZoneInfo
+
+# 서드파티
 import pandas as pd
-import smtplib, os, shutil
+import pdfkit
+from jinja2 import Template
+from flask import (
+    Flask, request, jsonify, render_template, render_template_string,
+    redirect, url_for, send_from_directory, flash, session
+)
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
-from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor
-import threading
-import uuid
-from jinja2 import Template
-from zoneinfo import ZoneInfo
-import pdfkit
+# ===== end =====
+
 
 """
 Unified Flask app for Render
@@ -37,31 +49,71 @@ BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
 # =============================
 # Email Credentials (ENV first)
 # =============================
+
+EMAIL_ADDRESS_01 = os.environ.get("EMAIL_ADDRESS_01")
+APP_PASSWORD_01  = os.environ.get("APP_PASSWORD_01")
+EMAIL_ADDRESS_02 = os.environ.get("EMAIL_ADDRESS_02")
+APP_PASSWORD_02  = os.environ.get("APP_PASSWORD_02")
+
 # Payroll sender previously hard-coded; now read from env with fallback
 #EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'lunch9797@gmail.com'
 #APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'txnb ofpi jgys jpfq'
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'saedam2025@gmail.com'
-APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'wjuy bedx stdm szdt'
+#EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'saedam2025@gmail.com'
+#APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'wjuy bedx stdm szdt'
 # Alternate (commented in original):
 
 
-# =============================
-# Part A — PAYROLL SENDER (from original app.py)
-# =============================
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# in-memory state for progress
-sent_count = 0
-sent_names = []
-sent_count_lock = threading.Lock()
 
-stop_requested = False
-stop_lock = threading.Lock()
+# =========================================================
+# Part A — PAYROLL SENDER (from original app.py, two separate operators: send01, send02)
+# =========================================================
 
-# static image cache
+# ---- per-operator config ----
+BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
+UPLOAD_FOLDER_BASE = os.path.join(BASE_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER_BASE, exist_ok=True)
+
+SENDER_KEYS = ["send01", "send02"]
+
+SENDER_CONF = {
+    "send01": {
+        "upload_dir": ...,
+        "template_base": "send01",
+        "email": EMAIL_ADDRESS_01 or os.environ.get("EMAIL_ADDRESS"),
+        "app_pw": APP_PASSWORD_01  or os.environ.get("APP_PASSWORD"),
+    },
+    "send02": {
+        "upload_dir": ...,
+        "template_base": "send02",
+        "email": EMAIL_ADDRESS_02 or os.environ.get("EMAIL_ADDRESS"),
+        "app_pw": APP_PASSWORD_02  or os.environ.get("APP_PASSWORD"),
+    },
+}
+
+for key in SENDER_KEYS:
+    os.makedirs(SENDER_CONF[key]["upload_dir"], exist_ok=True)
+
+# ---- operator-scoped runtime states ----
+runtime = {
+    "send01": {
+        "sent_count": 0,
+        "sent_names": [],
+        "sent_count_lock": threading.Lock(),
+        "stop_requested": False,
+        "stop_lock": threading.Lock(),
+    },
+    "send02": {
+        "sent_count": 0,
+        "sent_names": [],
+        "sent_count_lock": threading.Lock(),
+        "stop_requested": False,
+        "stop_lock": threading.Lock(),
+    },
+}
+
+# static image cache (공용)
 image_cache = {}
-
 def load_images():
     files = ['logo01.jpg', 'ad1.jpg', 'ad2.jpg', 'ad3.jpg']
     for fname in files:
@@ -73,32 +125,36 @@ def load_images():
             print(f"⚠️ 이미지 파일 누락: {path} 를 찾을 수 없습니다.")
         except Exception as e:
             print(f"❌ {fname} 이미지 로딩 중 오류: {e}")
-
 load_images()
 
-
-def render_email_template(template_name, context):
-    # Payroll sender uses raw template files rendered via string
-    with open(os.path.join('templates', template_name), 'r', encoding='utf-8') as f:
+def render_email_template(template_base, template_name, context):
+    # templates/<template_base>/<template_name>
+    with open(os.path.join('templates', template_base, template_name), 'r', encoding='utf-8') as f:
         template_str = f.read()
     return render_template_string(template_str, **context)
 
+def _email_login_params(sender_key):
+    return SENDER_CONF[sender_key]["email"], SENDER_CONF[sender_key]["app_pw"]
 
-@app.route('/', methods=['GET', 'POST'])
-def payroll_upload_file():
-    """Payroll sender upload + process"""
-    global sent_count, sent_names, stop_requested
+# ---- Upload UI (per-operator) ----
+@app.route('/send01', methods=['GET', 'POST'])
+@app.route('/send02', methods=['GET', 'POST'])
+def payroll_upload_file_multi():
+    sender_key = request.path.strip('/')
+
     if request.method == 'POST':
-        with stop_lock:
-            stop_requested = False
+        # reset stop flag
+        with runtime[sender_key]["stop_lock"]:
+            runtime[sender_key]["stop_requested"] = False
 
         file = request.files.get('excel')
         if file and file.filename.lower().endswith('.xlsx'):
             safe_filename = f"{uuid.uuid4()}.xlsx"
-            path = os.path.join(UPLOAD_FOLDER, safe_filename)
+            save_dir = SENDER_CONF[sender_key]["upload_dir"]
+            path = os.path.join(save_dir, safe_filename)
             file.save(path)
             try:
-                result_html = process_excel(path)
+                result_html = process_excel_multi(sender_key, path)
             except Exception as e:
                 return f"처리 중 오류 발생: {e}"
             finally:
@@ -106,40 +162,43 @@ def payroll_upload_file():
                     os.remove(path)
                 except Exception:
                     pass
-            # keep extra </div> to place button outside result box
-            return (result_html or "") + '</div><br><a href="/" style="padding: 8px 16px; background: #1f3c88; color: #fff; text-decoration: none; border-radius: 5px;">다시 업로드</a>'
+            return (result_html or "") + f'</div><br><a href="/{sender_key}" style="padding: 8px 16px; background: #1f3c88; color: #fff; text-decoration: none; border-radius: 5px;">다시 업로드</a>'
         else:
             return "엑셀 파일(.xlsx)만 업로드 가능합니다."
 
+    # 각 담당자 폴더의 업로드 폼 사용: templates/send01/upload_form.html, templates/send02/upload_form.html
+    upload_form_path = os.path.join("templates", SENDER_CONF[sender_key]["template_base"], "upload_form.html")
     return render_template_string(
-        open("templates/upload_form.html", encoding="utf-8").read(),
+        open(upload_form_path, encoding="utf-8").read(),
         uuid1=str(uuid.uuid4()), uuid2=str(uuid.uuid4()), uuid3=str(uuid.uuid4())
     )
 
-
-@app.route("/stop", methods=["POST"])
-def stop_sending():
-    global stop_requested
-    with stop_lock:
-        stop_requested = True
-    return '''
+# ---- Stop & Status (per-operator) ----
+@app.post('/send01/stop')
+@app.post('/send02/stop')
+def stop_sending_multi():
+    sender_key = request.path.split('/')[1]
+    with runtime[sender_key]["stop_lock"]:
+        runtime[sender_key]["stop_requested"] = True
+    return f'''
     <script>
-        alert("발송이 중단되었습니다.");
-        location.href = "/";
+        alert("({sender_key}) 발송이 중단되었습니다.");
+        location.href = "/{sender_key}";
     </script>
     '''
 
-
-@app.route('/status')
-def status():
+@app.get('/send01/status')
+@app.get('/send02/status')
+def status_multi():
+    sender_key = request.path.split('/')[1]
     return jsonify({
-        "sent_count": sent_count,
-        "sent_names": list(reversed(sent_names))  # display newest first
+        "sent_count": runtime[sender_key]["sent_count"],
+        "sent_names": list(reversed(runtime[sender_key]["sent_names"]))
     })
 
-
-@app.route('/upload_ad_image', methods=['POST'])
-def upload_ad_image():
+# ---- Optional: 광고 이미지 교체(공용) ----
+@app.route('/send/upload_ad_image', methods=['POST'])
+def upload_ad_image_multi():
     file = request.files.get('ad_file')
     target = request.form.get('target')
     if file and target in ['ad1.jpg', 'ad2.jpg', 'ad3.jpg']:
@@ -149,32 +208,38 @@ def upload_ad_image():
         return '''
         <script>
           alert("이미지가 성공적으로 교체되었습니다.");
-          window.location.href = "/";
+          window.history.back();
         </script>
         '''
     else:
         return "잘못된 요청입니다.", 400
 
+# ---- Core processor (per-operator) ----
+def process_excel_multi(sender_key, filepath):
+    # init runtime
+    runtime[sender_key]["sent_count"] = 0
+    runtime[sender_key]["sent_names"] = []
 
-def process_excel(filepath):
-    global sent_count, sent_names
-    sent_count = 0
-    sent_names = []
     summary_by_sheet = {}
 
     # header row at index 2 (3rd Excel row)
     excel_data = pd.read_excel(filepath, sheet_name=None, header=2)
 
     def format_account_number(account_number):
-        account_number = ''.join(filter(str.isdigit, account_number))
-        return '-'.join([account_number[i:i+4] for i in range(0, len(account_number), 4)])
+        s = str(account_number or "").strip()
+        digits = ''.join(ch for ch in s if ch.isdigit())
+        if not digits:
+            return ""
+        # 4자리 그룹 하이픈
+        return '-'.join([digits[i:i+4] for i in range(0, len(digits), 4)])
 
     def process_row(row, template_name, sheet_summary):
-        global EMAIL_ADDRESS, APP_PASSWORD, stop_requested, sent_count
-
-        with stop_lock:
-            if stop_requested:
+        # stop check
+        with runtime[sender_key]["stop_lock"]:
+            if runtime[sender_key]["stop_requested"]:
                 return
+
+        EMAIL_ADDRESS, APP_PASSWORD = _email_login_params(sender_key)
 
         try:
             name_raw = row.get('강사명') or row.get('직원명')
@@ -182,29 +247,26 @@ def process_excel(filepath):
             receiver_raw = row.get('이메일')
             receiver = str(receiver_raw).strip() if pd.notna(receiver_raw) else ''
 
-            # validation
-            has_name = name.lower() not in ('', 'nan', 'none', 'non')
-            has_email = receiver.lower() not in ('', 'nan', 'none', 'non')
+            has_name = bool(name) and name.lower() not in ('nan', 'none', 'non')
+            has_email = bool(receiver) and receiver.lower() not in ('nan', 'none', 'non')
 
-            # both missing → skip entirely
             if not has_name and not has_email:
                 return
 
-            # if either missing → show red message (no send)
             if not (has_name and has_email):
                 display_name = name if has_name else '이름 없음'
                 display_email = receiver if has_email else '이메일 없음'
                 msg = f"<span style='color:red;'>{display_name} - 이메일: {display_email}</span>"
-                with sent_count_lock:
-                    sent_names.append(msg)
+                with runtime[sender_key]["sent_count_lock"]:
+                    runtime[sender_key]["sent_names"].append(msg)
                     sheet_summary.append(msg)
                 return
 
             job = str(row.get('학교명', '')).strip()
             subject = str(row.get('과목', '')).strip()
             bank = str(row.get('은행', '')).strip()
-            account_src = str(row.get('계좌번호', '')).split('.')[0].strip()
-            account = format_account_number(account_src) if account_src else ''
+            account_src = str(row.get('계좌번호', '')).strip()
+            account = format_account_number(account_src)
             today = datetime.today().strftime('%Y년 %m월 %d일')
 
             def safe_amount(_row, key):
@@ -253,8 +315,14 @@ def process_excel(filepath):
                 'safe_text': safe_text
             }
 
+            template_base = SENDER_CONF[sender_key]["template_base"]
             with app.app_context():
-                html = render_email_template(template_name, context)
+                html = render_email_template(template_base, template_name, context)
+
+                from email.mime.multipart import MIMEMultipart
+                from email.mime.text import MIMEText
+                from email.mime.image import MIMEImage
+
                 msg = MIMEMultipart('related')
                 msg['Subject'] = f'[새담 지급명세서] {name}님 - {today}'
                 msg['From'] = EMAIL_ADDRESS
@@ -270,7 +338,6 @@ def process_excel(filepath):
                     ('ad1_image', 'ad1.jpg'),
                     ('ad2_image', 'ad2.jpg' if template_name == 'teacher.html' else 'ad3.jpg')
                 ]
-
                 for cid, fname in image_list:
                     img_data = image_cache.get(fname)
                     if img_data:
@@ -282,13 +349,13 @@ def process_excel(filepath):
                     smtp.login(EMAIL_ADDRESS, APP_PASSWORD)
                     smtp.send_message(msg)
 
-                with sent_count_lock:
-                    sent_names.append(f"{job} - {name}")
+                with runtime[sender_key]["sent_count_lock"]:
+                    runtime[sender_key]["sent_names"].append(f"{job} - {name}")
                     sheet_summary.append(f"{job} - {name}")
-                    sent_count += 1
+                    runtime[sender_key]["sent_count"] += 1
 
         except Exception as e:
-            print(f"❌ {row.get('강사명', row.get('직원명', '이름없음'))} 실패: {e}")
+            print(f"❌ [{sender_key}] {row.get('강사명', row.get('직원명', '이름없음'))} 실패: {e}")
 
     # template rules
     template_rules = [
@@ -308,12 +375,13 @@ def process_excel(filepath):
                     return tpl
         return DEFAULT_TEMPLATE
 
+    from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=5) as executor:
         for sheet_name, df in excel_data.items():
             df.columns = df.columns.str.strip()
             sheet_summary = []
 
-            # try to infer template from first row of the raw sheet
+            # try to infer template from first raw row
             try:
                 raw_df = pd.read_excel(filepath, sheet_name=sheet_name, header=None)
                 first_row = raw_df.iloc[0].astype(str).str.strip().tolist()
@@ -344,7 +412,7 @@ def process_excel(filepath):
       td {{ padding: 6px 10px; vertical-align: top; }}
       .sheet {{ margin-bottom:18px; }}
     </style></head><body>
-    <h2>총 {sent_count}명 메일 발송 완료</h2><div class='result-box'>
+    <h2>[{sender_key}] 총 {runtime[sender_key]["sent_count"]}명 메일 발송 완료</h2><div class='result-box'>
     """
     for sheet, names in summary_by_sheet.items():
         result_html += f"<div class='sheet'><h3>시트명: {sheet} (총 {len(names)}명)</h3><div class='result-box'><table><tr>"
@@ -355,8 +423,8 @@ def process_excel(filepath):
         result_html += "</tr></table></div></div>"
 
     result_html += "</div></body></html>"
-
     return result_html
+
 
 
 # =============================
