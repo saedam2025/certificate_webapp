@@ -55,12 +55,22 @@ APP_PASSWORD_01  = os.environ.get("APP_PASSWORD_01")
 EMAIL_ADDRESS_02 = os.environ.get("EMAIL_ADDRESS_02")
 APP_PASSWORD_02  = os.environ.get("APP_PASSWORD_02")
 
-# Payroll sender previously hard-coded; now read from env with fallback
+def _system_email_login_params(system: str):
+    # system은 "system01" 또는 "system02"
+    if str(system).endswith("01"):
+        return (EMAIL_ADDRESS_01 or os.environ.get("EMAIL_ADDRESS"),
+                APP_PASSWORD_01  or os.environ.get("APP_PASSWORD"))
+    else:  # system02 기본
+        return (EMAIL_ADDRESS_02 or os.environ.get("EMAIL_ADDRESS"),
+                APP_PASSWORD_02  or os.environ.get("APP_PASSWORD"))
+
+
+# ===== 저장용
 #EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'lunch9797@gmail.com'
 #APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'txnb ofpi jgys jpfq'
 #EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'saedam2025@gmail.com'
 #APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'wjuy bedx stdm szdt'
-# Alternate (commented in original):
+# =====
 
 
 
@@ -117,20 +127,26 @@ runtime = {
     },
 }
 
-# static image cache (공용)
+# 이미지 캐시: 공용 + send01 + send02 모두 로드====
 image_cache = {}
+
 def load_images():
-    files = ['logo01.jpg', 'ad1.jpg', 'ad2.jpg', 'ad3.jpg']
-    for fname in files:
-        path = os.path.join('static', fname)
-        try:
-            with open(path, 'rb') as f:
-                image_cache[fname] = f.read()
-        except FileNotFoundError:
-            print(f"⚠️ 이미지 파일 누락: {path} 를 찾을 수 없습니다.")
-        except Exception as e:
-            print(f"❌ {fname} 이미지 로딩 중 오류: {e}")
+    variants = ["", "send01", "send02"]  # ""=공용
+    files = ["logo01.jpg", "ad1.jpg", "ad2.jpg", "ad3.jpg"]
+    for v in variants:
+        for fname in files:
+            rel = f"{v}/{fname}" if v else fname
+            path = os.path.join("static", rel)
+            try:
+                with open(path, "rb") as f:
+                    image_cache[rel] = f.read()
+            except FileNotFoundError:
+                # 해당 파일이 없어도 괜찮음(폴백 사용)
+                pass
+
+# 앱 시작 시 로고 및 광고이미지 1회 로드===
 load_images()
+#============================
 
 def render_email_template(template_base, template_name, context):
     # templates/<template_base>/<template_name>
@@ -201,23 +217,39 @@ def status_multi():
         "sent_names": list(reversed(runtime[sender_key]["sent_names"]))
     })
 
-# ---- Optional: 광고 이미지 교체(공용) ----
-@app.route('/send/upload_ad_image', methods=['POST'])
+# ---- 광고 이미지 교체 (담당자별 분리 + 공용 폴백) ----
+@app.post('/send/upload_ad_image')
+@app.post('/send01/upload_ad_image')  # 원하면 유지/삭제 가능
+@app.post('/send02/upload_ad_image')
 def upload_ad_image_multi():
-    file = request.files.get('ad_file')
-    target = request.form.get('target')
-    if file and target in ['ad1.jpg', 'ad2.jpg', 'ad3.jpg']:
-        save_path = os.path.join('static', target)
-        file.save(save_path)
-        load_images()
-        return '''
-        <script>
-          alert("이미지가 성공적으로 교체되었습니다.");
-          window.history.back();
-        </script>
-        '''
-    else:
+    file   = request.files.get('ad_file')
+    target = request.form.get('target')   # 'logo01.jpg' | 'ad1.jpg' | 'ad2.jpg' | 'ad3.jpg'
+    bucket = request.form.get('bucket', '')  # '', 'send01', 'send02'
+
+    valid = {'logo01.jpg', 'ad1.jpg', 'ad2.jpg', 'ad3.jpg'}
+    if not file or target not in valid:
         return "잘못된 요청입니다.", 400
+
+    # bucket에 따라 저장 폴더 결정 (기본은 공용 static/)
+    if bucket in ('send01', 'send02'):
+        folder = os.path.join('static', bucket)
+    else:
+        folder = 'static'
+
+    os.makedirs(folder, exist_ok=True)
+    save_path = os.path.join(folder, target)
+    file.save(save_path)
+
+    # 새 파일을 메일 첨부 캐시에 반영
+    load_images()
+
+    return '''
+    <script>
+      alert("이미지 교체 완료");
+      history.back();
+    </script>
+    '''
+# ---- 광고 이미지 교체 끝 ----
 
 # ---- Core processor (per-operator) ----
 def process_excel_multi(sender_key, filepath):
@@ -321,6 +353,7 @@ def process_excel_multi(sender_key, filepath):
             }
 
             template_base = SENDER_CONF[sender_key]["template_base"]
+
             with app.app_context():
                 html = render_email_template(template_base, template_name, context)
 
@@ -338,15 +371,22 @@ def process_excel_multi(sender_key, filepath):
                 msg.attach(html_part)
 
                 # teacher vs others ad rule
+
+                # 담당자별 이미지 첨부 + 공용 폴백
+                base = sender_key  # 'send01' 또는 'send02'
                 image_list = [
-                    ('logo_image', 'logo01.jpg'),
-                    ('ad1_image', 'ad1.jpg'),
-                    ('ad2_image', 'ad2.jpg' if template_name == 'teacher.html' else 'ad3.jpg')
+                    ('logo_image', f'{base}/logo01.jpg'),
+                    ('ad1_image',   f'{base}/ad1.jpg'),
+                    ('ad2_image',   f'{base}/ad2.jpg' if template_name == 'teacher.html' else f'{base}/ad3.jpg'),
                 ]
-                for cid, fname in image_list:
-                    img_data = image_cache.get(fname)
-                    if img_data:
-                        mime_img = MIMEImage(img_data, _subtype='jpeg')
+                for cid, rel in image_list:
+                    # 1순위: 담당자 폴더 이미지, 2순위: 공용('logo01.jpg' 등)으로 폴백
+                    data = image_cache.get(rel)
+                    if data is None:
+                        fallback = rel.split('/', 1)[-1]  # 'logo01.jpg' 등
+                        data = image_cache.get(fallback)
+                    if data:
+                        mime_img = MIMEImage(data, _subtype='jpeg')
                         mime_img.add_header('Content-ID', f'<{cid}>')
                         msg.attach(mime_img)
 
@@ -501,16 +541,18 @@ def send_admin_notification(system, name, cert_type):
         print(f"❌ 시스템에 맞는 이메일 없음: {system}")
         return
 
+    from_addr, from_pw = _system_email_login_params(system)
+
     msg = MIMEText(
         f"새담 홈페이지를 통해 새로운 강사 경력증명발급 신청이 접수되었습니다.\n\n시스템: {system}\n\n신청자: {name}\n\n증명서 종류: {cert_type}"
     )
     msg['Subject'] = f'[{system.upper()}] 새담 강사경력증명서 신청 알림 (신청자: {name})'
-    msg['From'] = EMAIL_ADDRESS
+    msg['From'] = from_addr
     msg['To'] = to_email
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(EMAIL_ADDRESS, APP_PASSWORD)
+            smtp.login(from_addr, from_pw)
             smtp.send_message(msg)
             print(f"✅ 신청 알림 메일 전송됨: {to_email}")
     except Exception as e:
@@ -532,9 +574,11 @@ def format_korean_date(date_str):
     return dt.strftime("%Y년 %m월 %d일")
 
 
-def send_certificate_email(to_email, name, pdf_path, certificate_type):
+def send_certificate_email(system, to_email, name, pdf_path, certificate_type):
+    from_addr, from_pw = _system_email_login_params(system)
+
     msg = MIMEMultipart()
-    msg["From"] = EMAIL_ADDRESS
+    msg["From"] = from_addr
     msg["To"] = to_email
     msg["Subject"] = f"[{certificate_type}] {name} 강사님 문서입니다"
     body = f"{name} 강사님, 안녕하세요.\n\n요청하신 {certificate_type}를 첨부드립니다.\n\n(사)새담청소년교육문화원"
@@ -544,7 +588,7 @@ def send_certificate_email(to_email, name, pdf_path, certificate_type):
         part.add_header("Content-Disposition", "attachment", filename=os.path.basename(pdf_path))
         msg.attach(part)
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(EMAIL_ADDRESS, APP_PASSWORD)
+        server.login(from_addr, from_pw)
         server.send_message(msg)
 
 
@@ -817,7 +861,7 @@ def generate(system, idx):
 
     issue_no = get_next_issue_number()
     pdf_path = generate_pdf(row, issue_no, system)
-    send_certificate_email(row["이메일주소"], row["성명"], pdf_path, row["증명서종류"])
+    send_certificate_email(system, row["이메일주소"], row["성명"], pdf_path, row["증명서종류"])
 
     original_df = pd.read_excel(data_path)
     original_index = len(original_df) - 1 - idx
