@@ -69,30 +69,35 @@ APP_PASSWORD_02  = os.environ.get("APP_PASSWORD_02")
 # Part A — PAYROLL SENDER (from original app.py, two separate operators: send01, send02)
 # =========================================================
 
-# ---- per-operator config ----
+# ===== Part A config =====
 BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
-UPLOAD_FOLDER_BASE = os.path.join(BASE_DIR, 'uploads')
-os.makedirs(UPLOAD_FOLDER_BASE, exist_ok=True)
+UPLOAD_FOLDER_BASE = os.path.join(BASE_DIR, "uploads")
 
-SENDER_KEYS = ["send01", "send02"]
+SENDER_KEYS = ("send01", "send02")
+
+def _get_env(key, fallback=None):
+    return os.environ.get(key) or fallback
 
 SENDER_CONF = {
     "send01": {
-        "upload_dir": ...,
-        "template_base": "send01",
-        "email": EMAIL_ADDRESS_01 or os.environ.get("EMAIL_ADDRESS"),
-        "app_pw": APP_PASSWORD_01  or os.environ.get("APP_PASSWORD"),
+        "upload_dir": os.path.join(UPLOAD_FOLDER_BASE, "send01"),  # <-- 문자열 경로
+        "template_base": "send01",                                  # templates/send01/
+        "email": _get_env("EMAIL_ADDRESS_01", _get_env("EMAIL_ADDRESS")),
+        "app_pw": _get_env("APP_PASSWORD_01",  _get_env("APP_PASSWORD")),
     },
     "send02": {
-        "upload_dir": ...,
-        "template_base": "send02",
-        "email": EMAIL_ADDRESS_02 or os.environ.get("EMAIL_ADDRESS"),
-        "app_pw": APP_PASSWORD_02  or os.environ.get("APP_PASSWORD"),
+        "upload_dir": os.path.join(UPLOAD_FOLDER_BASE, "send02"),  # <-- 문자열 경로
+        "template_base": "send02",                                  # templates/send02/
+        "email": _get_env("EMAIL_ADDRESS_02", _get_env("EMAIL_ADDRESS")),
+        "app_pw": _get_env("APP_PASSWORD_02",  _get_env("APP_PASSWORD")),
     },
 }
 
+# 디렉터리 생성
 for key in SENDER_KEYS:
     os.makedirs(SENDER_CONF[key]["upload_dir"], exist_ok=True)
+# ===== end =====
+
 
 # ---- operator-scoped runtime states ----
 runtime = {
