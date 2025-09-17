@@ -65,12 +65,14 @@ def _system_email_login_params(system: str):
                 APP_PASSWORD_02  or os.environ.get("APP_PASSWORD"))
 
 
-# ===== 저장용
+# ===== 저장용: 구글메일주소와 앱비밀번호는 렌더서버 환경셋팅에 셋팅함. 아래를 써도 됨.
 #EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'lunch9797@gmail.com'
 #APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'txnb ofpi jgys jpfq'
 #EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'saedam2025@gmail.com'
 #APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'wjuy bedx stdm szdt'
-# =====
+#EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS") or 'daompluse@gmail.com'
+#APP_PASSWORD = os.environ.get("APP_PASSWORD") or 'qore sqyq ogvb edwo'
+# ========================================================
 
 
 
@@ -445,31 +447,83 @@ def process_excel_multi(sender_key, filepath):
 
             summary_by_sheet[sheet_name] = sheet_summary
 
-    # result HTML
+    # result HTML (급여명세서 발송 결과 페이지)============================
     result_html = f"""
-    <html><head><meta charset='UTF-8'>
-    <style>
-      body {{ font-family: 'Nanum Gothic', sans-serif; padding: 40px; background:#f7f8fb; }}
-      .result-box {{ background: #fff; border:1px solid #e5e7eb; padding: 20px; border-radius: 8px; }}
-      h2 {{ margin-top:0; }}
-      h3 {{ margin-bottom:10px; }}
-      table {{ border-collapse: collapse; width:100%; }}
-      td {{ padding: 6px 10px; vertical-align: top; }}
-      .sheet {{ margin-bottom:18px; }}
-    </style></head><body>
-    <h2>[{sender_key}] 총 {runtime[sender_key]["sent_count"]}명 메일 발송 완료</h2><div class='result-box'>
+    <html>
+    <head>
+      <meta charset='UTF-8'>
+      <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
+      <style>
+        :root {{
+          --bg: #f7f8fb;
+          --card: #ffffff;
+          --border: #e5e7eb;
+          --text: #111827;
+          --muted: #6b7280;
+          --brand: #1f3c88;
+          --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+        }}
+        * {{ box-sizing: border-box; }}
+        body {{
+          margin: 0; padding: 48px 24px;
+          background: var(--bg);
+          font-family: 'Nanum Gothic', sans-serif; color: var(--text);
+        }}
+        .page {{ max-width: 1080px; margin: 0 auto; }}
+        .header {{
+          display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }}
+        .title {{
+          font-size: 22px; font-weight: 800; color: var(--brand);
+        }}
+        .badge {{
+          background: #eef2ff; color: var(--brand);
+          border: 1px solid #dbe4ff; border-radius: 999px;
+          padding: 6px 10px; font-weight: 700; font-size: 13px;
+        }}
+        .card {{
+          background: var(--card); border: 1px solid var(--border);
+          border-radius: 12px; box-shadow: var(--shadow); padding: 18px;
+        }}
+        .sheet {{
+          border: 1px solid var(--border);
+          border-radius: 10px; padding: 14px; margin: 12px 0; background: #fff;
+        }}
+        .sheet-title {{ font-size: 16px; font-weight: 700; margin-bottom: 10px; }}
+        /* ← 이름 리스트: 왼쪽 정렬, 세로 나열 */
+        .names {{
+          display: flex; flex-direction: column; gap: 6px;
+          align-items: flex-start;  /* 핵심: 왼쪽 정렬 */
+        }}
+        .name-item {{ font-size: 14px; line-height: 1.5; color: var(--text); }}
+      </style>
+    </head>
+    <body>
+      <div class="page">
+        <div class="header">
+          <div class="title">[{sender_key}] 메일 발송 결과</div>
+          <div class="badge">총 {runtime[sender_key]["sent_count"]}명</div>
+        </div>
+
+        <div class="card">
     """
     for sheet, names in summary_by_sheet.items():
-        result_html += f"<div class='sheet'><h3>시트명: {sheet} (총 {len(names)}명)</h3><div class='result-box'><table><tr>"
-        for idx, entry in enumerate(names, 1):
-            result_html += f"<td>• {entry}&nbsp;&nbsp;&nbsp;&nbsp;</td>"
-            if idx % 10 == 0:
-                result_html += "</tr><tr>"
-        result_html += "</tr></table></div></div>"
+        result_html += f"""
+          <section class="sheet">
+            <div class="sheet-title">시트명: {sheet} (총 {len(names)}명)</div>
+            <div class="names">
+        """
+        for entry in names:
+            result_html += f"<div class='name-item'>• {entry}</div>"
+        result_html += "</div></section>"
 
-    result_html += "</div></body></html>"
+    result_html += """
+        </div>
+      </div>
+    </body>
+    </html>
+    """
     return result_html
-
 
 
 # =============================
