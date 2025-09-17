@@ -175,6 +175,19 @@
         <input type="file" name="excel" id="excel" onchange="updateFileName(this)" style="display:none;">
       </div>
 
+      <!-- ▼ 추가: 발송일 선택 (기본=오늘) -->
+      <div style="margin: 6px 0 12px 0;">
+        <label for="send_date" style="display:block; font-weight:600; margin-bottom:6px;">발송일</label>
+        <input
+          type="date"
+          id="send_date"
+          name="send_date"
+          style="padding:8px; border:1px solid #ccc; border-radius:6px;"
+          required
+        >
+      </div>
+      <!-- ▲ 추가 끝 -->
+
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button type="button" class="submit-btn2" onclick="stopSending();">⛔ 발송 중단</button>
         <button type="submit" class="submit-btn">📤 발송 시작</button>
@@ -250,6 +263,20 @@
       const fileName = input.files.length > 0 ? input.files[0].name : "선택된 파일 없음";
       document.getElementById("file-name").textContent = fileName;
     }
+
+    // ▼ 추가: 페이지 로드시 send_date 기본값을 오늘(YYYY-MM-DD)로 설정
+    (function () {
+      const el = document.getElementById('send_date');
+      if (!el) return;
+      const t = new Date();
+      const yyyy = t.getFullYear();
+      const mm = String(t.getMonth() + 1).padStart(2, '0');
+      const dd = String(t.getDate()).padStart(2, '0');
+      if (!el.value) el.value = `${yyyy}-${mm}-${dd}`;
+      // 과거 선택 막고 싶으면 아래 주석 해제
+      // el.min = `${yyyy}-${mm}-${dd}`;
+    })();
+    // ▲ 추가 끝
 
     let started = false;
 
