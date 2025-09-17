@@ -225,34 +225,32 @@ def status_multi():
 
 # ---- 광고 이미지 교체 (담당자별 분리 + 공용 폴백) ----
 @app.post('/send/upload_ad_image')
-@app.post('/send01/upload_ad_image')  # 원하면 유지/삭제 가능
+@app.post('/send01/upload_ad_image')
 @app.post('/send02/upload_ad_image')
 def upload_ad_image_multi():
     file   = request.files.get('ad_file')
-    target = request.form.get('target')   # 'logo01.jpg' | 'ad1.jpg' | 'ad2.jpg' | 'ad3.jpg'
+    target = request.form.get('target')    # 'ad1.jpg' | 'ad2.jpg' | 'ad3.jpg' | 'logo01.jpg'
     bucket = request.form.get('bucket', '')  # '', 'send01', 'send02'
 
     valid = {'logo01.jpg', 'ad1.jpg', 'ad2.jpg', 'ad3.jpg'}
     if not file or target not in valid:
         return "잘못된 요청입니다.", 400
 
-    # bucket에 따라 저장 폴더 결정 (기본은 공용 static/)
-    if bucket in ('send01', 'send02'):
-        folder = os.path.join('static', bucket)
-    else:
-        folder = 'static'
-
+    # 저장
+    folder = os.path.join('static', bucket) if bucket in ('send01','send02') else 'static'
     os.makedirs(folder, exist_ok=True)
-    save_path = os.path.join(folder, target)
-    file.save(save_path)
+    file.save(os.path.join(folder, target))
 
-    # 새 파일을 메일 첨부 캐시에 반영
+    # 메일 첨부용 캐시 갱신
     load_images()
 
+    # ✅ 캐시 무력화 리다이렉트 (history.back() 사용 금지)
     return '''
     <script>
       alert("이미지 교체 완료");
-      history.back();
+      const url = new URL(document.referrer || '/', window.location.origin);
+      url.searchParams.set('cb', Date.now().toString());   // cache-busting
+      window.location.replace(url.toString());
     </script>
     '''
 # ---- 광고 이미지 교체 끝 ----
