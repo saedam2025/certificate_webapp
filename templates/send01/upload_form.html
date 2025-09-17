@@ -200,6 +200,17 @@
       }
     </script>
 
+     <script>
+     (function () {
+       const el = document.getElementById('send_date');
+       if (!el) return;
+       const t=new Date(), yyyy=t.getFullYear(), mm=String(t.getMonth()+1).padStart(2,'0'), dd=String(t.getDate()).padStart(2,'0');
+       el.value = `${yyyy}-${mm}-${dd}`;
+       el.max = el.value;  // ← 이 한 줄로 '미래 선택' 막기
+     })();
+     </script>
+
+
     <div class="status-box">
       <span style="display: block; font-size:16px; color:#1f3c88; text-align: center; font-weight: bold; margin-bottom: 16px;">📊 발송 진행 상황</span>
       <div id="status-message" style="
