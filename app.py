@@ -24,6 +24,10 @@ from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 # ===== end =====
 
+# 렌더서버는 미국서버이므로 한국시간으로 변경-------
+def now_kst():
+    return datetime.now(ZoneInfo("Asia/Seoul"))
+#--------
 
 """
 Unified Flask app for Render
@@ -306,7 +310,7 @@ def process_excel_multi(sender_key, filepath):
             bank = str(row.get('은행', '')).strip()
             account_src = str(row.get('계좌번호', '')).strip()
             account = format_account_number(account_src)
-            today = datetime.today().strftime('%Y년 %m월 %d일')
+            today = now_kst().strftime('%Y년 %m월 %d일')
 
             def safe_amount(_row, key):
                 try:
@@ -478,14 +482,25 @@ def process_excel_multi(sender_key, filepath):
         .sheet {{
           border:1px solid var(--border); border-radius:10px;
           padding:14px; margin:12px 0; background:#fff;
+          box-sizing:border-box; max-width:100%;
         }}
         .sheet-title {{ font-size:16px; font-weight:700; margin-bottom:10px; }}
 
-        /* 핵심: 왼쪽정렬 + 10개 단위로 고정 줄 */
-        .names {{ display:flex; flex-direction:column; gap:6px; }}
-        .names-row {{ display:flex; gap:12px; align-items:flex-start; }}
+        /* 왼쪽 정렬 + 10명씩 고정 칸 */
+        .names {{ display:flex; flex-direction:column; gap:8px; }}
+        .names-row {{
+          display:grid;
+          grid-template-columns: repeat(10, minmax(0, 1fr)); /* 1줄에 정확히 10칸 */
+          column-gap:12px;
+          row-gap:6px;
+          align-items:start;
+        }}
         .name-item {{
-          white-space:nowrap; font-size:14px; line-height:1.5; padding:2px 0;
+          font-size:14px; line-height:1.5; padding:2px 0;
+          white-space:normal;            /* 줄바꿈 허용 */
+          overflow-wrap:anywhere;        /* 너무 긴 텍스트 안전 분리 */
+          word-break:break-word;         /* 브라우저 호환 */
+          min-width:0;                   /* grid 셀에서 축소 허용 */
         }}
       </style>
     </head>
@@ -557,11 +572,6 @@ ADMIN_EMAILS = {
 }
 
 SEAL_IMAGE = "seal.gif"
-
-# Time helpers
-
-def now_kst():
-    return datetime.now(ZoneInfo("Asia/Seoul"))
 
 # Issue number helpers
 
