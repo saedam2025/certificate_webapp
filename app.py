@@ -460,78 +460,80 @@ def process_excel_multi(sender_key, filepath):
       <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
       <style>
         :root {{
-          --bg:#f7f8fb; --card:#fff; --border:#e5e7eb; --text:#111827; --brand:#1f3c88;
-          --shadow:0 8px 24px rgba(17,24,39,.08);
+          --bg: #f7f8fb;
+          --card: #ffffff;
+          --border: #e5e7eb;
+          --text: #1f2937;
+          --muted: #6b7280;
+          --brand: #1f3c88;
+          --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }}
-        * {{ box-sizing:border-box; }}
+        * {{ box-sizing: border-box; }}
         body {{
-          margin:0; padding:48px 24px; background:var(--bg);
-          font-family:'Nanum Gothic',sans-serif; color:var(--text);
+          margin: 0; padding: 48px 32px;
+          background: var(--bg);
+          font-family: 'Nanum Gothic', sans-serif; color: var(--text);
         }}
-        .page {{ max-width:1080px; margin:0 auto; }}
-        .header {{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }}
-        .title {{ font-size:22px; font-weight:800; color:var(--brand); }}
+        .page {{ max-width: 1440px; margin: 0 auto; }}
+        .header {{ display:flex; align-items:center; gap:12px; margin-bottom:18px; }}
+        .title {{ font-size: 22px; font-weight: 800; color: var(--brand); }}
         .badge {{
-          background:#eef2ff; color:var(--brand); border:1px solid #dbe4ff;
-          border-radius:999px; padding:6px 10px; font-weight:700; font-size:13px;
+          display:inline-block; background:#eef2ff; color:#3730a3;
+          border:1px solid #c7d2fe; padding:4px 10px; border-radius:999px;
+          font-size:13px; font-weight:700;
         }}
         .card {{
-          background:var(--card); border:1px solid var(--border);
-          border-radius:12px; box-shadow:var(--shadow); padding:18px;
+          background: var(--card); border: 1px solid var(--border);
+          border-radius: 12px; box-shadow: var(--shadow);
+          padding: 18px;
         }}
         .sheet {{
-          border:1px solid var(--border); border-radius:10px;
-          padding:14px; margin:12px 0; background:#fff;
-          box-sizing:border-box; max-width:100%;
+          border: 1px solid var(--border);
+          border-radius: 10px; padding: 16px; margin: 14px 0; background:#fff;
         }}
-        .sheet-title {{ font-size:16px; font-weight:700; margin-bottom:10px; }}
-
-        /* 왼쪽 정렬 + 10명씩 고정 칸 */
-        .names {{ display:flex; flex-direction:column; gap:8px; }}
-        .names-row {{
-          display:grid;
-          grid-template-columns: repeat(10, minmax(0, 1fr)); /* 1줄에 정확히 10칸 */
-          column-gap:12px;
-          row-gap:6px;
-          align-items:start;
+        .sheet-title {{ font-size:16px; font-weight:700; margin-bottom:12px; }}
+        .names {{
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 6px 18px;
+          align-items: start; justify-items: start;
         }}
         .name-item {{
-          font-size:14px; line-height:1.5; padding:2px 0;
-          white-space:normal;            /* 줄바꿈 허용 */
-          overflow-wrap:anywhere;        /* 너무 긴 텍스트 안전 분리 */
-          word-break:break-word;         /* 브라우저 호환 */
-          min-width:0;                   /* grid 셀에서 축소 허용 */
+          font-size:14px; line-height:1.5; white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis;
         }}
+        .actions {{ margin-top:22px; text-align:center; }}
+        .btn {{
+          display:inline-block; background: var(--brand); color:#fff;
+          padding:10px 16px; border-radius:8px; text-decoration:none;
+          border:1px solid #1f3c88;
+        }}
+        .btn:hover {{ opacity:.92; }}
       </style>
     </head>
     <body>
       <div class="page">
         <div class="header">
           <div class="title">[{sender_key}] 메일 발송 결과</div>
-          <div class="badge">총 {runtime[sender_key]["sent_count"]}명</div>
+          <span class="badge">총 {runtime[sender_key]["sent_count"]}명</span>
         </div>
 
         <div class="card">
     """
     for sheet, names in summary_by_sheet.items():
         result_html += f"""
-          <section class="sheet">
+          <div class="sheet">
             <div class="sheet-title">시트명: {sheet} (총 {len(names)}명)</div>
             <div class="names">
         """
-        # ⬇️ 한 줄에 10명씩 채우고 줄바꿈
-        for idx, entry in enumerate(names, 1):
-            if (idx - 1) % 10 == 0:
-                result_html += "<div class='names-row'>"
+        for entry in names:
             result_html += f"<div class='name-item'>• {entry}</div>"
-            if idx % 10 == 0:
-                result_html += "</div>"
-        if len(names) % 10 != 0:
-            result_html += "</div>"  # 마지막 줄 닫기
+        result_html += "</div></div>"
 
-        result_html += "</div></section>"
-
-    result_html += """
+    result_html += f"""
+          <div class="actions">
+            <a class="btn" href="/{sender_key}">발송 페이지로 가기</a>
+          </div>
         </div>
       </div>
     </body>
