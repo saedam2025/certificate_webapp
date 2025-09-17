@@ -185,7 +185,9 @@ def payroll_upload_file_multi():
                     os.remove(path)
                 except Exception:
                     pass
-            return (result_html or "") + f'</div><br><a href="/{sender_key}" style="padding: 8px 16px; background: #1f3c88; color: #fff; text-decoration: none; border-radius: 5px;">다시 업로드</a>'
+            return (result_html or "") + f'</div><br><a href="/{sender_key}"
+   style="display:block; margin:16px auto 24px; width:fit-content;
+          padding:8px 16px; background:#1f3c88; color:#fff; text-decoration:none; border-radius:5px;">발송 페이지로 가기</a>'
         else:
             return "엑셀 파일(.xlsx)만 업로드 가능합니다."
 
@@ -448,6 +450,7 @@ def process_excel_multi(sender_key, filepath):
             summary_by_sheet[sheet_name] = sheet_summary
 
     # result HTML (급여명세서 발송 결과 페이지)============================
+
     result_html = f"""
     <html>
     <head>
@@ -455,47 +458,37 @@ def process_excel_multi(sender_key, filepath):
       <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
       <style>
         :root {{
-          --bg: #f7f8fb;
-          --card: #ffffff;
-          --border: #e5e7eb;
-          --text: #111827;
-          --muted: #6b7280;
-          --brand: #1f3c88;
-          --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+          --bg:#f7f8fb; --card:#fff; --border:#e5e7eb; --text:#111827; --brand:#1f3c88;
+          --shadow:0 8px 24px rgba(17,24,39,.08);
         }}
-        * {{ box-sizing: border-box; }}
+        * {{ box-sizing:border-box; }}
         body {{
-          margin: 0; padding: 48px 24px;
-          background: var(--bg);
-          font-family: 'Nanum Gothic', sans-serif; color: var(--text);
+          margin:0; padding:48px 24px; background:var(--bg);
+          font-family:'Nanum Gothic',sans-serif; color:var(--text);
         }}
-        .page {{ max-width: 1080px; margin: 0 auto; }}
-        .header {{
-          display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-        }}
-        .title {{
-          font-size: 22px; font-weight: 800; color: var(--brand);
-        }}
+        .page {{ max-width:1080px; margin:0 auto; }}
+        .header {{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }}
+        .title {{ font-size:22px; font-weight:800; color:var(--brand); }}
         .badge {{
-          background: #eef2ff; color: var(--brand);
-          border: 1px solid #dbe4ff; border-radius: 999px;
-          padding: 6px 10px; font-weight: 700; font-size: 13px;
+          background:#eef2ff; color:var(--brand); border:1px solid #dbe4ff;
+          border-radius:999px; padding:6px 10px; font-weight:700; font-size:13px;
         }}
         .card {{
-          background: var(--card); border: 1px solid var(--border);
-          border-radius: 12px; box-shadow: var(--shadow); padding: 18px;
+          background:var(--card); border:1px solid var(--border);
+          border-radius:12px; box-shadow:var(--shadow); padding:18px;
         }}
         .sheet {{
-          border: 1px solid var(--border);
-          border-radius: 10px; padding: 14px; margin: 12px 0; background: #fff;
+          border:1px solid var(--border); border-radius:10px;
+          padding:14px; margin:12px 0; background:#fff;
         }}
-        .sheet-title {{ font-size: 16px; font-weight: 700; margin-bottom: 10px; }}
-        /* ← 이름 리스트: 왼쪽 정렬, 세로 나열 */
-        .names {{
-          display: flex; flex-direction: column; gap: 6px;
-          align-items: flex-start;  /* 핵심: 왼쪽 정렬 */
+        .sheet-title {{ font-size:16px; font-weight:700; margin-bottom:10px; }}
+
+        /* 핵심: 왼쪽정렬 + 10개 단위로 고정 줄 */
+        .names {{ display:flex; flex-direction:column; gap:6px; }}
+        .names-row {{ display:flex; gap:12px; align-items:flex-start; }}
+        .name-item {{
+          white-space:nowrap; font-size:14px; line-height:1.5; padding:2px 0;
         }}
-        .name-item {{ font-size: 14px; line-height: 1.5; color: var(--text); }}
       </style>
     </head>
     <body>
@@ -513,8 +506,16 @@ def process_excel_multi(sender_key, filepath):
             <div class="sheet-title">시트명: {sheet} (총 {len(names)}명)</div>
             <div class="names">
         """
-        for entry in names:
+        # ⬇️ 한 줄에 10명씩 채우고 줄바꿈
+        for idx, entry in enumerate(names, 1):
+            if (idx - 1) % 10 == 0:
+                result_html += "<div class='names-row'>"
             result_html += f"<div class='name-item'>• {entry}</div>"
+            if idx % 10 == 0:
+                result_html += "</div>"
+        if len(names) % 10 != 0:
+            result_html += "</div>"  # 마지막 줄 닫기
+
         result_html += "</div></section>"
 
     result_html += """
