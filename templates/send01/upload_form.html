@@ -2,317 +2,261 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>급여명세서 발송</title>
+  <title>새담 지급명세서 발송 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
   <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
   <style>
-    body {
-      font-family: 'Nanum Gothic', sans-serif;
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 40px;
+    :root{
+      --brand:#1f3c88;
+      --brand-2:#2b55c0;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 10px 30px rgba(31,60,136,.08);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:40px 20px;
+      background:var(--bg);
+      font-family:'Nanum Gothic', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      color:var(--text);
+    }
+    .page{max-width:900px; margin:0 auto;}
+    .hero{
+      display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg, var(--brand), var(--brand-2));
+      color:#fff; padding:18px 22px; border-radius:18px;
+      box-shadow:var(--shadow); margin-bottom:22px;
+    }
+    .hero h1{margin:0; font-size:22px; letter-spacing:.2px}
+    .card{
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow);
     }
 
-    .container {
-      max-width: 670px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-      padding: 32px 36px;
+    /* ========== 업로드 카드 ========== */
+    .upload-card{padding:22px;}
+    .row{
+      display:flex; gap:14px; align-items:end; flex-wrap:wrap;
+    }
+    .col{display:flex; flex-direction:column; gap:8px;}
+    .col.grow{flex:1 1 360px;}
+    .label{font-weight:700; font-size:13px; color:#344257}
+    .fileline{
+      display:flex; gap:10px; align-items:center; width:100%;
+    }
+    #file-name{
+      flex:1; min-height:40px; display:flex; align-items:center;
+      padding:10px 12px; border:1px dashed var(--border); border-radius:10px;
+      background:#f7f8fc; color:#445066; font-size:14px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .btn-file{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 14px; min-width:140px;
+      background:#eef3ff; color:var(--brand); border:1px solid #cdd9ff;
+      border-radius:10px; font-weight:800; cursor:pointer; transition:.2s;
+      white-space:nowrap;
+    }
+    .btn-file:hover{background:#dfe9ff}
+    input[type="file"]{display:none}
+
+    .date-input{
+      height:40px; padding:8px 10px; border:1px solid var(--border);
+      border-radius:10px; background:#fff; min-width:200px;
+      outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .date-input:focus{border-color:#c3cffc; box-shadow:0 0 0 4px rgba(43,85,192,.08)}
+
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;
+    }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 16px; border-radius:10px; cursor:pointer;
+      transition:.2s; border:1px solid transparent; font-weight:700;
+    }
+    .btn-primary{
+      background:#fff; color:var(--brand); border-color:var(--brand);
+      min-width:180px;
+    }
+    .btn-primary:hover{background:#eef3ff}
+    .btn-danger{
+      background:#ffe6ea; color:#b91c1c; border-color:#fca5a5; min-width:140px;
+    }
+    .btn-danger:hover{background:#ffcfd7}
+
+    /* ========== 상태 카드 ========== */
+    .status-card{padding:18px; margin-top:16px;}
+    .status-title{
+      font-weight:800; color:var(--brand); text-align:center; margin-bottom:10px;
+    }
+    .status-box{
+      border:1px solid var(--border); border-radius:12px; background:#fafbff;
+      padding:12px; height:140px; overflow:auto; font-size:14px; color:#333;
     }
 
-    .main-title {
-      max-width: 628px;
-      font-size: 22px;
-      color: white;
-      background-color: #1f3c88;
-      padding: 16px 20px;
-      border-radius: 10px;
-      text-align: center;
-      margin-bottom: 32px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* ========== 알림판(광고) 그리드 ========== */
+    .section-title{
+      margin:26px 0 10px; font-size:16px; font-weight:800;
+      color:var(--brand); text-align:center;
     }
-
-    .file-wrapper {
-      margin-bottom: 20px;
+    .ads-grid{
+      display:grid; grid-template-columns:repeat(3, 1fr);
+      gap:16px;
     }
-
-    .file-display {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 16px;
+    @media (max-width:820px){
+      .ads-grid{grid-template-columns:repeat(2, 1fr)}
     }
-
-    #file-name {
-      font-size: 14px;
-      color: #555;
-      background-color: #f0f0f0;
-      padding: 11px 12px;
-      border-radius: 6px;
-      min-width: 440px;
+    @media (max-width:560px){
+      .ads-grid{grid-template-columns:1fr}
     }
-
-    .file-label {
-      background-color: #e9f0fb;
-      color: #1f3c88;
-      padding: 12px 24px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 15px;
-      border: none;
-      transition: background-color 0.3s ease, color 0.3s ease;
-      font-weight: bold;
-      min-width: 140px;
-      text-align: center;
+    .ad-card{
+      padding:14px; border:1px solid var(--border);
+      border-radius:12px; background:#fff; box-shadow:var(--shadow);
     }
-
-    .file-label:hover {
-      background-color: #F5B027;
-      color: white;
+    .ad-img{
+      width:100%; height:220px; border-radius:10px; border:1px solid #dfe3ef;
+      background:#f8f9fd; object-fit:contain; display:block; margin-bottom:10px;
     }
-
-    .submit-btn {
-      background-color: transparent;
-      color: #1f3c88;
-      border: 1px solid #1f3c88;
-      padding: 10px 0;
-      font-size: 14px;
-      border-radius: 6px;
-      width: 100%;
-      max-width: 506px;
-      margin-top: 6px;
-      cursor: pointer;
+    .btn-lite{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+      background:#fff; color:#374151; cursor:pointer; transition:.2s;
+      font-weight:700;
     }
-
-    .submit-btn:hover {
-      background-color: #eaf0ff;
-    }
-
-    .submit-btn2 {
-      background-color: #ffb6c1;
-      color: black;
-      border: 1px solid #e74c3c;
-      padding: 10px 0;
-      font-size: 14px;
-      border-radius: 6px;
-      width: 100%;
-      max-width: 150px;
-      margin-top: 6px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .submit-btn2:hover {
-      background-color: #e74c3c;
-      color: white;
-      border-color: #ffb6c1;
-    }
-
-    .status-box {
-      width: 632px;
-      margin-top: 20px;
-      background: #fff;
-      padding: 16px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-shadow: 0 0 6px rgba(0,0,0,0.08);
-    }
-
-    .ad-section-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      gap: 76px;
-      margin-top: 10px;
-      padding-left: 2px;
-    }
-
-    .ad-section {
-      width: 170px;
-    }
-
-    .ad-section img {
-      width: 100%;
-      height: 250px;
-      object-fit: contain;
-      background-color: #f9f9f9;
-      border: 1px solid #ccc;
-      margin-bottom: 8px;
-      border-radius: 6px;
-    }
-
-    .ad-section input[type="file"] {
-      margin-bottom: 8px;
-    }
-
-    .section-title {
-      width: 625px;
-      font-size: 18px;
-      color: #1f3c88;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 12px 20px;
-      border-radius: 8px;
-      margin: 40px 0px 0px 0px;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
+    .btn-lite:hover{background:#f4f7ff}
+    .ad-file{width:100%; margin:8px 0}
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <h2 class="main-title">새담 지급명세서 발송 시스템</h2>
+  <div class="page">
+    <div class="hero"><h1>새담 지급명세서 발송 시스템</h1></div>
 
-    <form id="excel-form" method="post" enctype="multipart/form-data" action="/send01">
-      <div class="file-wrapper">
-        <div class="file-display">
-          <div id="file-name">[선택된 파일 없음]  *.xlsx 형식의 파일만 업로드 가능합니다.</div>
-          <label for="excel" class="file-label">📁 엑셀파일 선택</label>
+    <!-- 업로드 & 발송일 -->
+    <div class="card upload-card">
+      <form id="excel-form" method="post" enctype="multipart/form-data" action="/send01">
+        <div class="row">
+          <div class="col grow">
+            <label class="label">엑셀 파일</label>
+            <div class="fileline">
+              <div id="file-name">[선택된 파일 없음]  *.xlsx 형식의 파일만 업로드 가능합니다.</div>
+              <label for="excel" class="btn-file">📁 엑셀파일 선택</label>
+              <input type="file" id="excel" name="excel" accept=".xlsx" onchange="updateFileName(this)">
+            </div>
+          </div>
+
+          <div class="col">
+            <label class="label" for="send_date">발송일</label>
+            <input type="date" id="send_date" name="send_date" class="date-input" required>
+          </div>
         </div>
-        <input type="file" name="excel" id="excel" onchange="updateFileName(this)" style="display:none;">
-      </div>
 
-      <!-- ▼ 추가: 발송일 선택 (기본=오늘) -->
-      <div style="margin: 6px 0 12px 0;">
-        <label for="send_date" style="display:block; font-weight:600; margin-bottom:6px;">발송일</label>
-        <input
-          type="date"
-          id="send_date"
-          name="send_date"
-          style="padding:8px; border:1px solid #ccc; border-radius:6px;"
-          required
-        >
-      </div>
-      <!-- ▲ 추가 끝 -->
-
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="submit-btn2" onclick="stopSending();">⛔ 발송 중단</button>
-        <button type="submit" class="submit-btn">📤 발송 시작</button>
-      </div>
-    </form>
-
-    <script>
-      function stopSending() {
-        fetch('/send01/stop', { method: 'POST' })
-          .then(response => response.text())
-          .then(html => {
-            document.open();
-            document.write(html);
-            document.close();
-          });
-      }
-    </script>
-
-    <div class="status-box">
-      <span style="display: block; font-size:16px; color:#1f3c88; text-align: center; font-weight: bold; margin-bottom: 16px;">📊 발송 진행 상황</span>
-      <div id="status-message" style="
-        font-size: 14px;
-        color: #333;
-        background: #f9f9f9;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 10px;
-        height: 120px;
-        overflow-y: auto;
-        white-space: normal;
-      ">
-        아직 시작되지 않았습니다.
-      </div>
+        <div class="actions">
+          <button type="button" class="btn btn-danger" onclick="stopSending()">⛔ 발송 중단</button>
+          <button type="submit" class="btn btn-primary">📤 발송 시작</button>
+        </div>
+      </form>
     </div>
 
-<h2 class="section-title" style="font-size:16px; color:#1f3c88; text-align: center;">📢 알림판 이미지 교체</h2>
-<div class="ad-section-wrapper">
-  <div class="ad-section">
-    <img src="/static/send01/ad1.jpg?{{ uuid1 }}">
-    <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
-      <input type="hidden" name="bucket" value="send01">
-      <input type="hidden" name="target" value="ad1.jpg">
-      <input type="file" name="ad_file" accept="image/*" required>
-      <button type="submit" class="submit-btn">알림판1 공용 교체</button>
-    </form>
-  </div>
+    <!-- 진행상황 -->
+    <div class="card status-card">
+      <div class="status-title">📊 발송 진행 상황</div>
+      <div id="status-message" class="status-box">아직 시작되지 않았습니다.</div>
+    </div>
 
-  <div class="ad-section">
-    <img src="/static/send01/ad2.jpg?{{ uuid2 }}">
-    <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
-      <input type="hidden" name="bucket" value="send01">
-      <input type="hidden" name="target" value="ad2.jpg">
-      <input type="file" name="ad_file" accept="image/*" required>
-      <button type="submit" class="submit-btn">알림판2 강사용 교체</button>
-    </form>
-  </div>
+    <!-- 알림판 이미지 교체 -->
+    <h2 class="section-title">📢 알림판 이미지 교체</h2>
+    <div class="ads-grid">
+      <div class="ad-card">
+        <img class="ad-img" src="/static/send01/ad1.jpg?{{ uuid1 }}" alt="알림판 1 미리보기">
+        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+          <input type="hidden" name="bucket" value="send01">
+          <input type="hidden" name="target" value="ad1.jpg">
+          <input class="ad-file" type="file" name="ad_file" accept="image/*" required>
+          <button type="submit" class="btn-lite">알림판1 공용 교체</button>
+        </form>
+      </div>
 
-  <div class="ad-section">
-    <img src="/static/send01/ad3.jpg?{{ uuid3 }}">
-    <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
-      <input type="hidden" name="bucket" value="send01">
-      <input type="hidden" name="target" value="ad3.jpg">
-      <input type="file" name="ad_file" accept="image/*" required>
-      <button type="submit" class="submit-btn">알림판2 직원용 교체</button>
-    </form>
-  </div>
-</div>
+      <div class="ad-card">
+        <img class="ad-img" src="/static/send01/ad2.jpg?{{ uuid2 }}" alt="알림판 2(강사용) 미리보기">
+        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+          <input type="hidden" name="bucket" value="send01">
+          <input type="hidden" name="target" value="ad2.jpg">
+          <input class="ad-file" type="file" name="ad_file" accept="image/*" required>
+          <button type="submit" class="btn-lite">알림판2 강사용 교체</button>
+        </form>
+      </div>
 
+      <div class="ad-card">
+        <img class="ad-img" src="/static/send01/ad3.jpg?{{ uuid3 }}" alt="알림판 2(직원용) 미리보기">
+        <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
+          <input type="hidden" name="bucket" value="send01">
+          <input type="hidden" name="target" value="ad3.jpg">
+          <input class="ad-file" type="file" name="ad_file" accept="image/*" required>
+          <button type="submit" class="btn-lite">알림판2 직원용 교체</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script>
-    function updateFileName(input) {
-      const fileName = input.files.length > 0 ? input.files[0].name : "선택된 파일 없음";
-      document.getElementById("file-name").textContent = fileName;
+    function updateFileName(input){
+      const label = document.getElementById('file-name');
+      label.textContent = input.files.length ? input.files[0].name : "[선택된 파일 없음]  *.xlsx 형식의 파일만 업로드 가능합니다.";
     }
 
-    // ▼ 추가: 페이지 로드시 send_date 기본값을 오늘(YYYY-MM-DD)로 설정
-    (function () {
+    function stopSending(){
+      fetch('/send01/stop', { method: 'POST' })
+        .then(r => r.text())
+        .then(html => { document.open(); document.write(html); document.close(); });
+    }
+
+    // 페이지 로드시 발송일 기본값 = 오늘(YYYY-MM-DD)
+    (function(){
       const el = document.getElementById('send_date');
-      if (!el) return;
+      if(!el) return;
       const t = new Date();
       const yyyy = t.getFullYear();
-      const mm = String(t.getMonth() + 1).padStart(2, '0');
-      const dd = String(t.getDate()).padStart(2, '0');
-      if (!el.value) el.value = `${yyyy}-${mm}-${dd}`;
-      // 과거 선택 막고 싶으면 아래 주석 해제
+      const mm = String(t.getMonth()+1).padStart(2,'0');
+      const dd = String(t.getDate()).padStart(2,'0');
+      if(!el.value) el.value = `${yyyy}-${mm}-${dd}`;
+      // 과거 선택 막으려면:
       // el.min = `${yyyy}-${mm}-${dd}`;
     })();
-    // ▲ 추가 끝
 
+    // 진행상황 폴링
     let started = false;
-
-    document.querySelector("#excel-form").addEventListener("submit", function (e) {
-      const fileInput = document.getElementById("excel");
-      if (!fileInput.files.length) {
-        alert("📂 엑셀파일을 선택하지 않았습니다.");
+    document.getElementById('excel-form').addEventListener('submit', e=>{
+      const f = document.getElementById('excel');
+      if(!f.files.length){
+        alert('📂 엑셀파일을 선택하지 않았습니다.');
         e.preventDefault();
         return;
       }
-
       started = true;
-      document.getElementById("status-message").textContent = "메일을 발송 중입니다...";
+      document.getElementById('status-message').textContent = '메일을 발송 중입니다...';
     });
 
-    setInterval(() => {
-      if (!started) return;
-
+    setInterval(()=>{
+      if(!started) return;
       fetch('/send01/status')
-        .then(res => res.json())
-        .then(data => {
-          const { sent_count, sent_names } = data;
-
-          let tableRows = "<table style='width:100%;'>";
-          sent_names.forEach((name, index) => {
-            if (index % 5 === 0) tableRows += "<tr>";
-            tableRows += `<td style="padding: 4px; white-space: nowrap;">• ${name}</td>`;
-            if (index % 5 === 4) tableRows += "</tr>";
-          });
-          if (sent_names.length % 5 !== 0) tableRows += "</tr>";
-          tableRows += "</table>";
-
-          document.getElementById("status-message").innerHTML = `
-            총 <strong>${sent_count}</strong>명 발송 완료<br>
-            <div style="margin-top:8px;">${tableRows}</div>
-          `;
+        .then(res=>res.json())
+        .then(({sent_count, sent_names})=>{
+          let html = `총 <strong>${sent_count}</strong>명 발송 완료<br>`;
+          if(sent_names?.length){
+            html += "<div style='margin-top:8px;'><table style='width:100%; border-collapse:collapse;'>";
+            sent_names.forEach((name,i)=>{
+              if(i%5===0) html += "<tr>";
+              html += `<td style="padding:4px; white-space:nowrap;">• ${name}</td>`;
+              if(i%5===4) html += "</tr>";
+            });
+            if(sent_names.length%5!==0) html += "</tr>";
+            html += "</table></div>";
+          }
+          document.getElementById('status-message').innerHTML = html;
         });
     }, 5000);
   </script>
