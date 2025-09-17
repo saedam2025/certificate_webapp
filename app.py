@@ -512,7 +512,7 @@ def process_excel_multi(sender_key, filepath):
     <body>
       <div class="page">
         <div class="header">
-          <div class="title">[{sender_key}] 메일 발송 결과</div>
+          <div class="title">[지급명세서] 메일 발송 결과</div>
           <span class="badge">총 {runtime[sender_key]["sent_count"]}명</span>
         </div>
 
@@ -531,6 +531,8 @@ def process_excel_multi(sender_key, filepath):
     result_html += f"""
         </div>
       </div>
+    <br>
+    <img src="https://www.saedam.org/img_sub/logo.gif" alt="로고" style="display:block; margin:0 auto; height:48px; width:auto;">
     </body>
     </html>
     """
