@@ -175,6 +175,14 @@
         <input type="file" name="excel" id="excel" onchange="updateFileName(this)" style="display:none;">
       </div>
 
+      <!-- ▼ 추가: 발송일 선택 (기본=오늘) -->
+   <div style="margin: 6px 0 12px 0; display:flex; align-items:center; gap:8px; white-space:nowrap;">
+     <label for="send_date" style="font-size: 14px;">⏰ <span style="font-weight:bold;">지급일을 선택하세요!</span> (선택 된 날짜가 지급일로 입력되어 발송됩니다.)</label>
+     <input type="date" id="send_date" name="send_date" style="padding:8px; border:1px solid #ccc; border-radius:6px; width: 201px;" required>
+   </div>
+
+      <!-- ▲ 추가 끝 -->
+
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button type="button" class="submit-btn2" onclick="stopSending();">⛔ 발송 중단</button>
         <button type="submit" class="submit-btn">📤 발송 시작</button>
@@ -192,6 +200,18 @@
           });
       }
     </script>
+
+     <!-- 지급일 미래선택 막기 -->
+     <script>
+     (function () {
+       const el = document.getElementById('send_date');
+       if (!el) return;
+       const t=new Date(), yyyy=t.getFullYear(), mm=String(t.getMonth()+1).padStart(2,'0'), dd=String(t.getDate()).padStart(2,'0');
+       el.value = `${yyyy}-${mm}-${dd}`;
+       el.max = el.value;  
+     })();
+     </script>
+
 
     <div class="status-box">
       <span style="display: block; font-size:16px; color:#1f3c88; text-align: center; font-weight: bold; margin-bottom: 16px;">📊 발송 진행 상황</span>
@@ -213,7 +233,7 @@
 <h2 class="section-title" style="font-size:16px; color:#1f3c88; text-align: center;">📢 알림판 이미지 교체</h2>
 <div class="ad-section-wrapper">
   <div class="ad-section">
-    <img src="/static/send02/ad1.jpg?{{ uuid1 }}">
+    <img src="/ad/send02/ad1.jpg?{{ uuid1 }}">
     <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
       <input type="hidden" name="bucket" value="send02">
       <input type="hidden" name="target" value="ad1.jpg">
@@ -223,7 +243,7 @@
   </div>
 
   <div class="ad-section">
-    <img src="/static/send02/ad2.jpg?{{ uuid2 }}">
+    <img src="/ad/send02/ad2.jpg?{{ uuid2 }}">
     <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
       <input type="hidden" name="bucket" value="send02">
       <input type="hidden" name="target" value="ad2.jpg">
@@ -233,7 +253,7 @@
   </div>
 
   <div class="ad-section">
-    <img src="/static/send02/ad3.jpg?{{ uuid3 }}">
+    <img src="/ad/send02/ad3.jpg?{{ uuid3 }}">
     <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
       <input type="hidden" name="bucket" value="send02">
       <input type="hidden" name="target" value="ad3.jpg">
@@ -250,6 +270,20 @@
       const fileName = input.files.length > 0 ? input.files[0].name : "선택된 파일 없음";
       document.getElementById("file-name").textContent = fileName;
     }
+
+    // ▼ 추가: 페이지 로드시 send_date 기본값을 오늘(YYYY-MM-DD)로 설정
+    (function () {
+      const el = document.getElementById('send_date');
+      if (!el) return;
+      const t = new Date();
+      const yyyy = t.getFullYear();
+      const mm = String(t.getMonth() + 1).padStart(2, '0');
+      const dd = String(t.getDate()).padStart(2, '0');
+      if (!el.value) el.value = `${yyyy}-${mm}-${dd}`;
+      // 과거 선택 막고 싶으면 아래 주석 해제
+      // el.min = `${yyyy}-${mm}-${dd}`;
+    })();
+    // ▲ 추가 끝
 
     let started = false;
 
