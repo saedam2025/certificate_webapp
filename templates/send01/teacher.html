@@ -129,28 +129,5 @@
   </tr>
 </table>
 
-<!-- 인쇄 버튼 & 인쇄 전용 CSS -->
-<div class="print-toolbar" style="text-align:center; margin:24px 0;">
-    <button onclick="window.print()" 
-            style="padding:10px 18px; border-radius:8px; border:1px solid #ccc; background:#1f3c88; color:#fff; font-weight:600; cursor:pointer;">
-        🖨️ 인쇄하기
-    </button>
-</div>
-
-<style>
-    /* 인쇄용 최적화 */
-    @media print {
-        .print-toolbar, .no-print { display: none !important; }
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        /* 명세서 카드가 있으면 잘리지 않도록 */
-        .payslip-card { page-break-inside: avoid; break-inside: avoid; }
-        /* 표가 페이지 넘어갈 때 헤더 반복 */
-        table { page-break-inside: auto; border-collapse: collapse; width: 100%; }
-        thead { display: table-header-group; }
-        tfoot { display: table-footer-group; }
-    }
-</style>
-
-
 </body>
 </html>
