@@ -185,9 +185,7 @@ def payroll_upload_file_multi():
                     os.remove(path)
                 except Exception:
                     pass
-            return (result_html or "") + f'</div><br><a href="/{sender_key}"
-   style="display:block; margin:16px auto 24px; width:fit-content;
-          padding:8px 16px; background:#1f3c88; color:#fff; text-decoration:none; border-radius:5px;">발송 페이지로 가기</a>'
+            return (result_html or "") + f'</div><br><a href="/{sender_key}" style="display:block; margin:16px auto 24px; width:fit-content; padding:8px 16px; background:#1f3c88; color:#fff; text-decoration:none; border-radius:5px;">발송 페이지로 가기</a>'
         else:
             return "엑셀 파일(.xlsx)만 업로드 가능합니다."
 
