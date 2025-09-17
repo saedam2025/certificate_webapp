@@ -176,10 +176,11 @@
       </div>
 
       <!-- ▼ 추가: 발송일 선택 (기본=오늘) -->
-      <div style="margin: 6px 0 12px 0;">
-        <label for="send_date" style="display:block; font-weight:600; margin-bottom:6px;">발송일</label>
-        <input type="date" id="send_date" name="send_date" style="padding:8px; border:1px solid #ccc; border-radius:6px;" required>
-      </div>
+   <div style="margin: 6px 0 12px 0; display:flex; align-items:center; gap:8px; white-space:nowrap;">
+     <label for="send_date" style="font-size: 14px;">⏰ <span style="font-weight:bold;">지급일을 선택하세요!</span> (선택 된 날짜가 지급일로 입력되어 발송됩니다.)</label>
+     <input type="date" id="send_date" name="send_date" style="padding:8px; border:1px solid #ccc; border-radius:6px; width: 201px;" required>
+   </div>
+
       <!-- ▲ 추가 끝 -->
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -200,13 +201,14 @@
       }
     </script>
 
+     <!-- 지급일 미래선택 막기 -->
      <script>
      (function () {
        const el = document.getElementById('send_date');
        if (!el) return;
        const t=new Date(), yyyy=t.getFullYear(), mm=String(t.getMonth()+1).padStart(2,'0'), dd=String(t.getDate()).padStart(2,'0');
        el.value = `${yyyy}-${mm}-${dd}`;
-       el.max = el.value;  // ← 이 한 줄로 '미래 선택' 막기
+       el.max = el.value;  
      })();
      </script>
 
@@ -231,7 +233,7 @@
 <h2 class="section-title" style="font-size:16px; color:#1f3c88; text-align: center;">📢 알림판 이미지 교체</h2>
 <div class="ad-section-wrapper">
   <div class="ad-section">
-    <img src="/static/send01/ad1.jpg?{{ uuid1 }}">
+    <img src="/ad/send01/ad1.jpg?{{ uuid1 }}">
     <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
       <input type="hidden" name="bucket" value="send01">
       <input type="hidden" name="target" value="ad1.jpg">
@@ -241,7 +243,7 @@
   </div>
 
   <div class="ad-section">
-    <img src="/static/send01/ad2.jpg?{{ uuid2 }}">
+    <img src="/ad/send01/ad2.jpg?{{ uuid2 }}">
     <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
       <input type="hidden" name="bucket" value="send01">
       <input type="hidden" name="target" value="ad2.jpg">
@@ -251,7 +253,7 @@
   </div>
 
   <div class="ad-section">
-    <img src="/static/send01/ad3.jpg?{{ uuid3 }}">
+    <img src="/ad/send01/ad3.jpg?{{ uuid3 }}">
     <form method="POST" action="/send/upload_ad_image" enctype="multipart/form-data">
       <input type="hidden" name="bucket" value="send01">
       <input type="hidden" name="target" value="ad3.jpg">
