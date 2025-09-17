@@ -531,9 +531,6 @@ def process_excel_multi(sender_key, filepath):
         result_html += "</div></div>"
 
     result_html += f"""
-          <div class="actions">
-            <a class="btn" href="/{sender_key}">발송 페이지로 가기</a>
-          </div>
         </div>
       </div>
     </body>
