@@ -106,7 +106,6 @@ def _system_email_login_params(system: str):
 # =========================================================
 
 # ===== Part A config =====
-BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
 UPLOAD_FOLDER_BASE = os.path.join(BASE_DIR, "uploads")
 
 SENDER_KEYS = ("send01", "send02")
@@ -222,7 +221,7 @@ def payroll_upload_file_multi():
         with runtime[sender_key]["stop_lock"]:
             runtime[sender_key]["stop_requested"] = False
 
-        chosen_date = resolve_send_date(request.form)
+        chosen_date = min(resolve_send_date(request.form), now_kst().date())
         runtime[sender_key]["send_date"] = chosen_date
         runtime[sender_key]["send_date_str"] = chosen_date.strftime('%Y년 %m월 %d일')
         runtime[sender_key]["send_date_iso"] = chosen_date.strftime('%Y-%m-%d')
@@ -282,22 +281,30 @@ def status_multi():
 @app.post('/send02/upload_ad_image')
 def upload_ad_image_multi():
     file   = request.files.get('ad_file')
-    target = request.form.get('target')    # 'ad1.jpg' | 'ad2.jpg' | 'ad3.jpg' | 'logo01.jpg'
-    bucket = request.form.get('bucket', '')  # '', 'send01', 'send02'
+    target = request.form.get('target')              # 'ad1.jpg' | 'ad2.jpg' | 'ad3.jpg' | 'logo01.jpg'
+    bucket = request.form.get('bucket', '')          # '', 'send01', 'send02'
 
     valid = {'logo01.jpg', 'ad1.jpg', 'ad2.jpg', 'ad3.jpg'}
     if not file or target not in valid:
         return "잘못된 요청입니다.", 400
 
-# ...
-# 저장 (지속 저장소)
-folder = os.path.join(AD_DIR, bucket) if bucket in ('send01','send02') else AD_DIR
-os.makedirs(folder, exist_ok=True)
-file.save(os.path.join(folder, target))
+    # ✅ 지속 저장소(/mnt/data/ad_images ...)에 저장
+    folder = os.path.join(AD_DIR, bucket) if bucket in ('send01', 'send02') else AD_DIR
+    os.makedirs(folder, exist_ok=True)
+    file.save(os.path.join(folder, target))
 
-# 캐시 갱신
-load_images()
-# ...
+    # 캐시 갱신
+    load_images()
+
+    # 캐시 무력화 리다이렉트
+    return '''
+    <script>
+      alert("이미지 교체 완료");
+      const url = new URL(document.referrer || '/', window.location.origin);
+      url.searchParams.set('cb', Date.now().toString());
+      window.location.replace(url.toString());
+    </script>
+    '''
 
 # ---- 광고 이미지 교체 mnt/data/ad_images로  ----
 from flask import send_file, abort
@@ -321,17 +328,6 @@ def serve_ad(rel):
     abort(404)
 # ---- 광고 이미지 교체 mnt/data/ad_images로 끝  ----
 
-
-    # ✅ 캐시 무력화 리다이렉트 (history.back() 사용 금지)
-    return '''
-    <script>
-      alert("이미지 교체 완료");
-      const url = new URL(document.referrer || '/', window.location.origin);
-      url.searchParams.set('cb', Date.now().toString());   // cache-busting
-      window.location.replace(url.toString());
-    </script>
-    '''
-# ---- 광고 이미지 교체 끝 ----
 
 # ---- Core processor (per-operator) ----
 def process_excel_multi(sender_key, filepath):
