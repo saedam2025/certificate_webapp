@@ -29,6 +29,21 @@ def now_kst():
     return datetime.now(ZoneInfo("Asia/Seoul"))
 #--------
 
+#---지급날짜 선택기능을 위한 코드--------------
+def resolve_send_date(form) -> datetime.date:
+    """
+    <input name="send_date" type="date"> (yyyy-mm-dd)을 받음.
+    비어있거나 잘못되면 KST 오늘 날짜로 처리.
+    """
+    raw = (form.get('send_date') or '').strip()
+    if raw:
+        try:
+            return datetime.strptime(raw, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    return now_kst().date()
+#--------------------------------------------
+
 """
 Unified Flask app for Render
 - Part A: Payroll slip email sender (original app.py)
@@ -174,6 +189,11 @@ def payroll_upload_file_multi():
         with runtime[sender_key]["stop_lock"]:
             runtime[sender_key]["stop_requested"] = False
 
+        chosen_date = resolve_send_date(request.form)
+        runtime[sender_key]["send_date"] = chosen_date
+        runtime[sender_key]["send_date_str"] = chosen_date.strftime('%Y년 %m월 %d일')
+        runtime[sender_key]["send_date_iso"] = chosen_date.strftime('%Y-%m-%d')
+
         file = request.files.get('excel')
         if file and file.filename.lower().endswith('.xlsx'):
             safe_filename = f"{uuid.uuid4()}.xlsx"
@@ -308,7 +328,11 @@ def process_excel_multi(sender_key, filepath):
             bank = str(row.get('은행', '')).strip()
             account_src = str(row.get('계좌번호', '')).strip()
             account = format_account_number(account_src)
-            today = now_kst().strftime('%Y년 %m월 %d일')
+
+            # 업로드 폼에서 선택한 날짜(없으면 오늘)
+            send_date_display = runtime[sender_key].get("send_date_str") or now_kst().strftime('%Y년 %m월 %d일')
+            send_date_iso = runtime[sender_key].get("send_date_iso") or now_kst().strftime('%Y-%m-%d')
+
 
             def safe_amount(_row, key):
                 try:
@@ -348,7 +372,11 @@ def process_excel_multi(sender_key, filepath):
                 'bank': bank,
                 'account': account,
                 'remark': remark,
-                'today': today,
+       
+                'today': send_date_display,        # 날짜 선택용 코드
+                'send_date': send_date_display,      # 표시용(한글 형식)
+                'send_date_iso': send_date_iso,      # YYYY-MM-DD
+
                 'real_amount': real_amount,
                 'row': row,
                 'safe_amount': safe_amount,
@@ -366,7 +394,7 @@ def process_excel_multi(sender_key, filepath):
                 from email.mime.image import MIMEImage
 
                 msg = MIMEMultipart('related')
-                msg['Subject'] = f'[새담 지급명세서] {name}님 - {today}'
+                msg['Subject'] = f'[새담 지급명세서] {name}님 - {send_date_display}'
                 msg['From'] = EMAIL_ADDRESS
                 msg['To'] = receiver
 
