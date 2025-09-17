@@ -65,6 +65,11 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "saedam-super-secret")
 # Render's ephemeral disk safe base dir
 BASE_DIR = "/mnt/data" if os.path.exists("/mnt/data") else "."
 
+# 지속 저장 디렉터리(급여명세서 광고 이미지 ad01.jpg등등 저장용)
+AD_DIR = os.path.join(BASE_DIR, "ad_images")
+os.makedirs(AD_DIR, exist_ok=True)
+
+
 # =============================
 # Email Credentials (ENV first)
 # =============================
@@ -152,18 +157,46 @@ runtime = {
 image_cache = {}
 
 def load_images():
+    """
+    우선순위: AD_DIR/(send01|send02)/파일 -> AD_DIR/공용파일 -> static/(send..)/파일 -> static/공용파일
+    """
     variants = ["", "send01", "send02"]  # ""=공용
     files = ["logo01.jpg", "ad1.jpg", "ad2.jpg", "ad3.jpg"]
+
+    def read_bytes(rel):
+        # 1) persistent: 버킷별
+        p1 = os.path.join(AD_DIR, rel)
+        if os.path.exists(p1):
+            with open(p1, "rb") as f:
+                return f.read()
+
+        # 2) persistent: 공용
+        fname = rel.split("/", 1)[-1]
+        p2 = os.path.join(AD_DIR, fname)
+        if os.path.exists(p2):
+            with open(p2, "rb") as f:
+                return f.read()
+
+        # 3) static: 버킷별
+        p3 = os.path.join("static", rel)
+        if os.path.exists(p3):
+            with open(p3, "rb") as f:
+                return f.read()
+
+        # 4) static: 공용
+        p4 = os.path.join("static", fname)
+        if os.path.exists(p4):
+            with open(p4, "rb") as f:
+                return f.read()
+
+        return None
+
     for v in variants:
         for fname in files:
             rel = f"{v}/{fname}" if v else fname
-            path = os.path.join("static", rel)
-            try:
-                with open(path, "rb") as f:
-                    image_cache[rel] = f.read()
-            except FileNotFoundError:
-                # 해당 파일이 없어도 괜찮음(폴백 사용)
-                pass
+            data = read_bytes(rel)
+            if data:
+                image_cache[rel] = data
 
 # 앱 시작 시 로고 및 광고이미지 1회 로드===
 load_images()
@@ -256,13 +289,38 @@ def upload_ad_image_multi():
     if not file or target not in valid:
         return "잘못된 요청입니다.", 400
 
-    # 저장
-    folder = os.path.join('static', bucket) if bucket in ('send01','send02') else 'static'
-    os.makedirs(folder, exist_ok=True)
-    file.save(os.path.join(folder, target))
+# ...
+# 저장 (지속 저장소)
+folder = os.path.join(AD_DIR, bucket) if bucket in ('send01','send02') else AD_DIR
+os.makedirs(folder, exist_ok=True)
+file.save(os.path.join(folder, target))
 
-    # 메일 첨부용 캐시 갱신
-    load_images()
+# 캐시 갱신
+load_images()
+# ...
+
+# ---- 광고 이미지 교체 mnt/data/ad_images로  ----
+from flask import send_file, abort
+
+def _safe_join(base, rel):
+    rel = rel.replace("\\", "/")
+    if ".." in rel:
+        return None
+    return os.path.join(base, rel)
+
+@app.get("/ad/<path:rel>")
+def serve_ad(rel):
+    # 1) persistent 우선
+    p = _safe_join(AD_DIR, rel)
+    if p and os.path.exists(p):
+        return send_file(p)
+    # 2) static 폴백
+    p2 = _safe_join("static", rel)
+    if p2 and os.path.exists(p2):
+        return send_file(p2)
+    abort(404)
+# ---- 광고 이미지 교체 mnt/data/ad_images로 끝  ----
+
 
     # ✅ 캐시 무력화 리다이렉트 (history.back() 사용 금지)
     return '''
