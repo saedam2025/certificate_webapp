@@ -133,6 +133,13 @@
       toggleReasonSelect();
     });
   </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', ()=> {
+        document.getElementById('end-date').max = new Date().toISOString().slice(0,10);
+    });
+</script>
+
 </head>
 
 <body>
