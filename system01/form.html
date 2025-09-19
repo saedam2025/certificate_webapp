@@ -134,6 +134,7 @@
     });
   </script>
 
+    <!-- 종료일 선택에서 미래날짜를 선택하지 못하게 함 -->
 <script>
     document.addEventListener('DOMContentLoaded', ()=> {
         document.getElementById('end-date').max = new Date().toISOString().slice(0,10);
