@@ -133,6 +133,14 @@
       toggleReasonSelect();
     });
   </script>
+
+    <!-- 종료일 선택에서 미래날짜를 선택하지 못하게 함 -->
+<script>
+    document.addEventListener('DOMContentLoaded', ()=> {
+        document.getElementById('end-date').max = new Date().toISOString().slice(0,10);
+    });
+</script>
+
 </head>
 
 <body>
@@ -358,7 +366,7 @@ window.onload = function () {
     padding: 8px 16px;
     border-radius: 6px;
   ">
-    발급문의: 📞 031-8016-1900
+    발급문의: comedu74@nate.com
   </span>
 </div>
   <br>
