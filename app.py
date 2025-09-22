@@ -491,8 +491,8 @@ def process_excel_multi(sender_key, filepath):
     # template rules
     template_rules = [
         (['강사', '선택형', '맞춤형'], 'teacher.html'),
-        (['직원근로자'], 'employee_worker.html'),
-        (['직원사업자'], 'employee_business.html'),
+        (['직원근로자','임직원/센터장'], 'employee_worker.html'),
+        (['직원사업자','센터장/안전코디'], 'employee_business.html'),
         (['퇴직자'], 'retired.html'),
     ]
     DEFAULT_TEMPLATE = 'teacher.html'
