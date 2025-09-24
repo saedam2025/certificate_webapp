@@ -1,5 +1,7 @@
-Flask
+flask
 pandas
-jinja2
-pdfkit
 openpyxl
+xlsxwriter
+gunicorn
+pdfkit
+jinja2
