@@ -1016,14 +1016,14 @@ def generate(system, idx):
     return redirect(url_for("admin", system=system, page=page))
 
 
-# ===== Deposit (입금용 엑셀 생성기) Blueprint — 기존 코드 수정 없이 추가 =====
-# 붙이는 위치: Entry Point 직전 (모든 @app.route 정의가 끝난 아래)
+# ===== (입금용 엑셀 생성기) Blueprint — 기존 코드 수정 없이 추가 =====
+
 from flask import Blueprint, request, send_file, render_template_string, abort, current_app
 import io, os, re, zipfile
 import pandas as pd
 from datetime import datetime
 
-deposit_bp = Blueprint("deposit", __name__)
+deposit_bp = Blueprint("trweb", __name__)
 DEPOSIT_CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "200"))  # 시트 누적 인원 기준 (기본 200)
 
 def deposit_clean_account(acc):
@@ -1260,7 +1260,7 @@ def deposit_build_excel_bytes(df_with_sheet: pd.DataFrame, file_label: str) -> b
     return output.getvalue()
 
 # === 블루프린트 등록 (모든 라우트 정의 끝난 뒤, Entry Point 위 한 줄) ===
-app.register_blueprint(deposit_bp, url_prefix="/deposit")
+app.register_blueprint(deposit_bp, url_prefix="/trweb")
 
 
 
