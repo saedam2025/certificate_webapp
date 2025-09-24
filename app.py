@@ -1230,7 +1230,7 @@ def deposit_build_excel_bytes(df_with_sheet: pd.DataFrame, file_label: str) -> b
         ws.set_column(5, 5, 20, tf)
 
         # 계좌번호 문자열 강제
-        if "계좌번호" in result_df.columns:@deposit_bp.get("/")
+        if "계좌번호" in result_df.columns:
             acc_idx = list(result_df.columns).index("계좌번호")
             for r, v in enumerate(result_df["계좌번호"].fillna(""), start=1):
                 ws.write_string(r, acc_idx, str(v))
