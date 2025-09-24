@@ -1023,7 +1023,7 @@ import io, os, re, zipfile
 import pandas as pd
 from datetime import datetime
 
-deposit_bp = Blueprint("trweb", __name__)
+trweb_bp = Blueprint("trweb", __name__)
 DEPOSIT_CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "200"))  # 시트 누적 인원 기준 (기본 200)
 
 def deposit_clean_account(acc):
@@ -1075,7 +1075,7 @@ DEPOSIT_INDEX_HTML = """
     </p>
 
     <div class="box">
-      <form method="post" action="{{ url_for('deposit.deposit_process') }}" enctype="multipart/form-data">
+      <form method="post" action="{{ url_for('trweb.deposit_process') }}" enctype="multipart/form-data">
         <label for="file">엑셀 파일 업로드 (.xlsx)</label>
         <input id="file" name="file" type="file" accept=".xlsx" required />
         <div class="hint">예: sss.xlsx</div>
@@ -1260,7 +1260,7 @@ def deposit_build_excel_bytes(df_with_sheet: pd.DataFrame, file_label: str) -> b
     return output.getvalue()
 
 # === 블루프린트 등록 (모든 라우트 정의 끝난 뒤, Entry Point 위 한 줄) ===
-app.register_blueprint(deposit_bp, url_prefix="/trweb")
+app.register_blueprint(trweb_bp, url_prefix="/trweb")
 
 
 
