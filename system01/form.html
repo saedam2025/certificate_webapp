@@ -111,25 +111,18 @@
       }
     }
 
-function toggleReasonSelect() {
-  const certType = document.querySelector('select[name="증명서종류"]');
-  const reasonWrapper = document.getElementById("reason-wrapper");
-  const reasonSelect = reasonWrapper.querySelector('select');
-
-  // 해촉/퇴직 둘 다 사유 입력 노출
-  const needReason = new Set(["강사 해촉증명서", "강사 퇴직증명서"]);
-
-  if (needReason.has(certType.value)) {
-    reasonWrapper.style.display = "flex";
-    reasonSelect.disabled = false;
-  } else {
-    reasonWrapper.style.display = "none";
-    reasonSelect.disabled = true;
-  }
-}
-
-document.addEventListener('DOMContentLoaded', toggleReasonSelect);
-
+    function toggleReasonSelect() {
+      const certType = document.querySelector('select[name="증명서종류"]');
+      const reasonWrapper = document.getElementById("reason-wrapper");
+      const reasonSelect = reasonWrapper.querySelector('select');
+      if (certType.value === "강사 해촉증명서") {
+        reasonWrapper.style.display = "flex";
+        reasonSelect.disabled = false;
+      } else {
+        reasonWrapper.style.display = "none";
+        reasonSelect.disabled = true;
+      }
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       document.querySelector('select[name="종료일선택"]')?.addEventListener('change', function () {
@@ -166,7 +159,6 @@ document.addEventListener('DOMContentLoaded', toggleReasonSelect);
             <option value="">-- 선택하세요 --</option>
             <option value="강사 활동증명서">강사 활동증명서</option>
             <option value="강사 해촉증명서">강사 해촉증명서</option>
-            <option value="강사 퇴직증명서">강사 퇴직증명서</option>
           </select>
         </label>
 
@@ -258,14 +250,11 @@ window.onload = function () {
     const endDateSelect = form.querySelector('select[name="종료일선택"]').value;
 
     // ⛔ 해촉증명서 + 현재까지 선택 방지
-const forbidCurrentTo = ["강사 해촉증명서", "강사 퇴직증명서"];
-
-if (forbidCurrentTo.includes(certType) && endDateSelect === "현재까지") {
-  alert(`${certType}의 경우 근무종료일을 '현재까지'로 선택할 수 없습니다.\n정확한 날짜를 지정해주세요.`);
-  e.preventDefault();
-  return;
-}
-
+    if (certType === "강사 해촉증명서" && endDateSelect === "현재까지") {
+      alert("강사 해촉증명서의 경우 근무종료일을 '현재까지'로 선택할 수 없습니다.\n정확한 날짜를 지정해주세요.");
+      e.preventDefault();
+      return;
+    }
 
     const emailInput = form.querySelector('input[name="이메일주소"]');
     const email = emailInput.value.trim();
