@@ -507,7 +507,7 @@ def process_excel_multi(sender_key, filepath):
 
     # --- 순차 발송 (병렬 제거) ------------------------------------------------------
     import time
-    SEND_DELAY_SEC = float(os.environ.get("SEND_DELAY_SEC", "1.5"))  # 0이면 지연 없음
+    SEND_DELAY_SEC = float(os.environ.get("SEND_DELAY_SEC", "0"))  # 0이면 지연 없음
 
     for sheet_name, df in excel_data.items():
         df.columns = df.columns.str.strip()
