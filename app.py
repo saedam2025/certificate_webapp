@@ -7,7 +7,6 @@ import uuid
 import threading
 import smtplib
 from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 
 # 서드파티
@@ -506,33 +505,47 @@ def process_excel_multi(sender_key, filepath):
                     return tpl
         return DEFAULT_TEMPLATE
 
-    from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        for sheet_name, df in excel_data.items():
-            df.columns = df.columns.str.strip()
-            sheet_summary = []
+    # --- 순차 발송 (병렬 제거) ------------------------------------------------------
+    import time
+    SEND_DELAY_SEC = float(os.environ.get("SEND_DELAY_SEC", "1.5"))  # 0이면 지연 없음
 
-            # try to infer template from first raw row
-            try:
-                raw_df = pd.read_excel(filepath, sheet_name=sheet_name, header=None)
-                first_row = raw_df.iloc[0].astype(str).str.strip().tolist()
-                all_keywords = [kw for kws, _ in template_rules for kw in kws]
-                payroll_type = next(
-                    (v for v in first_row if any(kw.lower() in v.lower() for kw in all_keywords)),
-                    ''
-                )
-            except Exception:
-                payroll_type = ''
+    for sheet_name, df in excel_data.items():
+        df.columns = df.columns.str.strip()
+        sheet_summary = []
 
-            template_name = pick_template(payroll_type)
+        # try to infer template from first raw row
+        try:
+            raw_df = pd.read_excel(filepath, sheet_name=sheet_name, header=None)
+            first_row = raw_df.iloc[0].astype(str).str.strip().tolist()
+            all_keywords = [kw for kws, _ in template_rules for kw in kws]
+            payroll_type = next(
+                (v for v in first_row if any(kw.lower() in v.lower() for kw in all_keywords)),
+                ''
+            )
+        except Exception:
+            payroll_type = ''
 
-            for _, row in df.iterrows():
-                executor.submit(process_row, row, template_name, sheet_summary)
+        template_name = pick_template(payroll_type)
 
-            summary_by_sheet[sheet_name] = sheet_summary
+        # ✅ 한 명씩 순차 처리
+        for _, row in df.iterrows():
+            # 중단 요청 체크
+            with runtime[sender_key]["stop_lock"]:
+                if runtime[sender_key]["stop_requested"]:
+                    break
 
-    # result HTML (급여명세서 발송 결과 페이지)============================
+            process_row(row, template_name, sheet_summary)
 
+            # Gmail 블록 방지용 속도 제한
+            if SEND_DELAY_SEC > 0:
+                try:
+                    time.sleep(SEND_DELAY_SEC)
+                except Exception:
+                    pass
+
+        summary_by_sheet[sheet_name] = sheet_summary
+
+    # === 결과 HTML 생성 ===
     result_html = f"""
     <html>
     <head>
