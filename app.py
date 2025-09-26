@@ -864,11 +864,7 @@ def submit(system):
     form_data["발급일"] = ""
     if "종료일선택" in form_data:
         del form_data["종료일선택"]
-    종료사유 = (
-    form_data.get("종료사유")
-    if form_data.get("증명서종류") in ["강사 해촉증명서", "강사 퇴직증명서"]
-    else ""
-    )
+    종료사유 = form_data.get("종료사유") if form_data.get("증명서종류") == "강사 해촉증명서" else ""
 
     ordered_fields = [
         "신청일", "증명서종류", "성명", "주민번호", "자택주소",
