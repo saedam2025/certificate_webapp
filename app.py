@@ -475,7 +475,7 @@ def process_excel_multi(sender_key, filepath):
                         mime_img.add_header('Content-ID', f'<{cid}>')
                         msg.attach(mime_img)
 
-                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=60) as smtp:
                     smtp.login(EMAIL_ADDRESS, APP_PASSWORD)
                     smtp.send_message(msg)
 
@@ -505,9 +505,25 @@ def process_excel_multi(sender_key, filepath):
                     return tpl
         return DEFAULT_TEMPLATE
 
-    # --- 순차 발송 (병렬 제거 및 너무빠른 메일발송을 막기위한 딜레이 초 설정) ------------------------------------------------------
-    import time
-    SEND_DELAY_SEC = float(os.environ.get("SEND_DELAY_SEC", "0.27"))  # 0이면 지연 없음
+
+    # --- 순차 발송 (속도 제어: 지연 + 지터 + 주기적 쿨다운) --------------------------
+    import time, random  # ✅ random 추가
+
+    # 기본 지연(초) + 지터(0~해당 값 무작위)
+    SEND_DELAY_SEC  = float(os.environ.get("SEND_DELAY_SEC",  "3.5"))  # 권장 3.5~5
+    SEND_JITTER_SEC = float(os.environ.get("SEND_JITTER_SEC", "1.5"))  # 권장 1.5~3
+
+    # N명마다 COOLDOWN_SEC(초) 만큼 추가 휴식
+    COOLDOWN_EVERY = int(os.environ.get("COOLDOWN_EVERY", "20"))  # 권장 15~25
+    COOLDOWN_SEC   = float(os.environ.get("COOLDOWN_SEC",   "90"))  # 권장 60~120
+
+    def smart_sleep():
+        """기본 지연 + 랜덤 지터"""
+        d = SEND_DELAY_SEC + random.random() * max(0.0, SEND_JITTER_SEC)
+        try:
+            time.sleep(d)
+        except Exception:
+            pass
 
     for sheet_name, df in excel_data.items():
         df.columns = df.columns.str.strip()
@@ -527,7 +543,9 @@ def process_excel_multi(sender_key, filepath):
 
         template_name = pick_template(payroll_type)
 
-        # ✅ 한 명씩 순차 처리
+        # ✅ 한 명씩 순차 처리 (+ 지터 + 주기적 쿨다운) — 시트별 카운터 초기화
+        sent_since_cooldown = 0
+
         for _, row in df.iterrows():
             # 중단 요청 체크
             with runtime[sender_key]["stop_lock"]:
@@ -536,14 +554,21 @@ def process_excel_multi(sender_key, filepath):
 
             process_row(row, template_name, sheet_summary)
 
-            # Gmail 블록 방지용 속도 제한
-            if SEND_DELAY_SEC > 0:
+            # ① 기본 지연 + ② 지터
+            smart_sleep()
+
+            # ③ 주기적 쿨다운
+            sent_since_cooldown += 1
+            if COOLDOWN_EVERY > 0 and sent_since_cooldown >= COOLDOWN_EVERY:
                 try:
-                    time.sleep(SEND_DELAY_SEC)
+                    time.sleep(COOLDOWN_SEC)
                 except Exception:
                     pass
+                sent_since_cooldown = 0
 
+        # ⬅️ 이 시트 처리 결과 반영 (시트 루프 안쪽)
         summary_by_sheet[sheet_name] = sheet_summary
+
 
     # === 결과 HTML 생성 ===
     result_html = f"""
