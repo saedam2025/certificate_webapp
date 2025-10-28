@@ -506,16 +506,16 @@ def process_excel_multi(sender_key, filepath):
         return DEFAULT_TEMPLATE
 
 
-    # --- 순차 발송 (속도 제어: 지연 + 지터 + 주기적 쿨다운) --------------------------
+    # --- 순차 발송 (속도 제어: 지연 + 지터 + 주기적 쿨다운) -------------------------------------
     import time, random  # ✅ random 추가
 
     # 기본 지연(초) + 지터(0~해당 값 무작위)
-    SEND_DELAY_SEC  = float(os.environ.get("SEND_DELAY_SEC",  "3.5"))  # 권장 3.5~5
+    SEND_DELAY_SEC  = float(os.environ.get("SEND_DELAY_SEC",  "4.0"))  # 권장 3.5~5
     SEND_JITTER_SEC = float(os.environ.get("SEND_JITTER_SEC", "1.5"))  # 권장 1.5~3
 
     # N명마다 COOLDOWN_SEC(초) 만큼 추가 휴식
-    COOLDOWN_EVERY = int(os.environ.get("COOLDOWN_EVERY", "20"))  # 권장 15~25
-    COOLDOWN_SEC   = float(os.environ.get("COOLDOWN_SEC",   "90"))  # 권장 60~120
+    COOLDOWN_EVERY = int(os.environ.get("COOLDOWN_EVERY", "25"))  # 권장 15~25
+    COOLDOWN_SEC   = float(os.environ.get("COOLDOWN_SEC",   "61"))  # 권장 60~120
 
     def smart_sleep():
         """기본 지연 + 랜덤 지터"""
@@ -685,7 +685,7 @@ ADMIN_PASSWORDS = {
 
 # Admin notification targets
 ADMIN_EMAILS = {
-    "system01": os.environ.get("ADMIN_EMAIL_SYS01", "lunch97@naver.com"),
+    "system01": os.environ.get("ADMIN_EMAIL_SYS01", "edu197@naver.com"),
     "system02": os.environ.get("ADMIN_EMAIL_SYS02", "comedu74@nate.com"),
 }
 
