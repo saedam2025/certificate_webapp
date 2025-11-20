@@ -511,11 +511,11 @@ def process_excel_multi(sender_key, filepath):
 
     # 기본 지연(초) + 지터(0~해당 값 무작위)
     SEND_DELAY_SEC  = float(os.environ.get("SEND_DELAY_SEC",  "4.0"))  # 권장 3.5~5
-    SEND_JITTER_SEC = float(os.environ.get("SEND_JITTER_SEC", "1.5"))  # 권장 1.5~3
+    SEND_JITTER_SEC = float(os.environ.get("SEND_JITTER_SEC", "3"))  # 권장 1.5~3
 
     # N명마다 COOLDOWN_SEC(초) 만큼 추가 휴식
     COOLDOWN_EVERY = int(os.environ.get("COOLDOWN_EVERY", "25"))  # 권장 15~25
-    COOLDOWN_SEC   = float(os.environ.get("COOLDOWN_SEC",   "61"))  # 권장 60~120
+    COOLDOWN_SEC   = float(os.environ.get("COOLDOWN_SEC",   "65"))  # 권장 60~120
 
     def smart_sleep():
         """기본 지연 + 랜덤 지터"""
